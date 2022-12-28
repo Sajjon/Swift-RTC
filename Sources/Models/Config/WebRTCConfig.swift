@@ -10,6 +10,7 @@ import Foundation
 public struct WebRTCConfig: Sendable, Hashable, Codable {
     public let isInitator: Bool
     public let iceServers: [String]
+    
     public init(
         isInitator: Bool,
         iceServers: [String] = ["stun:stun.l.google.com:19302",

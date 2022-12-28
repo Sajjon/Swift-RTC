@@ -9,6 +9,33 @@ import Foundation
 import WebRTC
 import RTCModels
 
+private extension PeerConnection {
+    actor Channels {
+        
+        private var channels: [DataChannelID: RTCDataChannel] = [:]
+        
+        init() {
+            
+        }
+        
+        enum Error: String, LocalizedError, Hashable {
+            case channelAlreadyExists
+        }
+        func containsID(_ id: DataChannelID) -> Bool {
+            channels.keys.contains(id)
+        }
+        func assertUnique(id: DataChannelID) throws {
+            guard !containsID(id) else {
+                throw Error.channelAlreadyExists
+            }
+        }
+        func insert(channel: RTCDataChannel, id: DataChannelID) async throws {
+            try assertUnique(id: id)
+            channels[id] = channel
+        }
+    }
+}
+
 public final class PeerConnection:
     NSObject,
     RTCPeerConnectionDelegate,
@@ -20,6 +47,10 @@ public final class PeerConnection:
     public let config: WebRTCConfig
 
     private let peerConnection: RTCPeerConnection
+    private let channels: Channels = .init()
+    
+    public let shouldNegotiateAsyncSequence: AsyncStream<Void>
+    private let shouldNegotiateAsyncContinuation: AsyncStream<Void>.Continuation
     
     public init(
         id: PeerConnectionID,
@@ -42,6 +73,14 @@ public final class PeerConnection:
         }
         
         self.peerConnection = peerConnection
+        
+        var shouldNegotiateAsyncContinuation: AsyncStream<Void>.Continuation!
+        let shouldNegotiateAsyncSequence: AsyncStream<Void> = .init { continuation in
+            shouldNegotiateAsyncContinuation = continuation
+        }
+        self.shouldNegotiateAsyncSequence = shouldNegotiateAsyncSequence
+        self.shouldNegotiateAsyncContinuation = shouldNegotiateAsyncContinuation
+        
         super.init()
         
         self.peerConnection.delegate = self
@@ -52,12 +91,30 @@ public extension PeerConnection {
     typealias ID = PeerConnectionID
     enum Error: String, LocalizedError, Sendable {
         case failedToCreatePeerConnection
+        case failedToCreateDataChannel
     }
 }
 
 private extension PeerConnection {
     static var negotiationConstraints: RTCMediaConstraints {
         .init(mandatoryConstraints: [:], optionalConstraints: [:])
+    }
+}
+
+// MARK: Channel
+public extension PeerConnection {
+    func newChannel(id: DataChannelID, config: DataChannelConfig) async throws {
+        try await channels.assertUnique(id: id)
+        
+        // This will trigger `shouldNegotiate`
+        guard let channel = peerConnection.dataChannel(
+            forLabel: "Data", // move into config or param?
+            configuration: config.rtc()
+        ) else {
+            throw Error.failedToCreateDataChannel
+        }
+        channel.delegate = self
+        try await channels.insert(channel: channel, id: id)
     }
 }
 
@@ -95,6 +152,7 @@ public extension PeerConnection {
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
         debugPrint("peerConnection id: \(id), should Negotiate")
+        shouldNegotiateAsyncContinuation.yield()
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
