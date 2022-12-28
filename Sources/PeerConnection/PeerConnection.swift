@@ -9,10 +9,6 @@ import Foundation
 import WebRTC
 import RTCModels
 
-public protocol PeerConnectionDelegate: AnyObject {
-    
-}
-
 public final class PeerConnection:
     NSObject,
     RTCPeerConnectionDelegate,
@@ -22,19 +18,15 @@ public final class PeerConnection:
    
     public let id: ID
     public let config: WebRTCConfig
-    
-    private unowned let delegate: PeerConnectionDelegate
 
     private let peerConnection: RTCPeerConnection
     
     public init(
         id: PeerConnectionID,
-        config: WebRTCConfig,
-        delegate: PeerConnectionDelegate
+        config: WebRTCConfig
     ) throws {
         self.id = id
         self.config = config
-        self.delegate = delegate
         
         guard
             let peerConnection = RTCPeerConnectionFactory().peerConnection(
@@ -60,6 +52,38 @@ public extension PeerConnection {
     typealias ID = PeerConnectionID
     enum Error: String, LocalizedError, Sendable {
         case failedToCreatePeerConnection
+    }
+}
+
+private extension PeerConnection {
+    static var negotiationConstraints: RTCMediaConstraints {
+        .init(mandatoryConstraints: [:], optionalConstraints: [:])
+    }
+}
+
+// MARK: Negotiation
+public extension PeerConnection {
+    
+    func offer() async throws -> Offer {
+        let localSDP = try await peerConnection.offer(for: Self.negotiationConstraints)
+        try await peerConnection.setLocalDescription(localSDP)
+        return Offer(sdp: localSDP.sdp)
+    }
+    
+    func answer() async throws -> Answer {
+        let localSDP = try await peerConnection.answer(for: Self.negotiationConstraints)
+        try await peerConnection.setLocalDescription(localSDP)
+        return Answer(sdp: localSDP.sdp)
+    }
+
+    func setRemoteOffer(_ offer: Offer) async throws {
+        let sdp = offer.rtc()
+        try await peerConnection.setRemoteDescription(sdp)
+    }
+    
+    func setRemoteAnswer(_ answer: Answer) async throws {
+        let sdp = answer.rtc()
+        try await peerConnection.setRemoteDescription(sdp)
     }
 }
 
