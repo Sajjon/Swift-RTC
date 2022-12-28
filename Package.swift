@@ -6,23 +6,43 @@ import PackageDescription
 let package = Package(
     name: "swift-rtc",
     products: [
-        // Products define the executables and libraries a package produces, and make them visible to other packages.
-        .library(
-            name: "swift-rtc",
-            targets: ["swift-rtc"]),
+        .library(name: "RTCClient", targets: ["RTCClient"])
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
+        .package(url: "https://github.com/stasel/WebRTC", from: "108.0.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
-            name: "swift-rtc",
-            dependencies: []),
+            name: "RTCModels",
+            dependencies: [],
+            path: "Sources/Models"
+        ),
+        .target(
+            name: "RTCPeerConnection",
+            dependencies: [
+                "RTCModels",
+                "WebRTC"
+            ],
+            path: "Sources/PeerConnection"
+        ),
         .testTarget(
-            name: "swift-rtcTests",
-            dependencies: ["swift-rtc"]),
+            name: "PeerConnectionTests",
+            dependencies: [
+                "RTCPeerConnection"
+            ]
+        ),
+        .target(
+            name: "RTCSignaling",
+            dependencies: ["RTCModels"],
+            path: "Sources/Signaling"
+        ),
+        .target(
+            name: "RTCClient",
+            dependencies: [
+                "RTCSignaling",
+                "RTCPeerConnection",
+            ],
+            path: "Sources/Client"
+        )
     ]
 )
