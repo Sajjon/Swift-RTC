@@ -20,7 +20,7 @@ extension ICECandidate {
 }
 
 extension RTCIceCandidate {
-    var ice: ICECandidate {
+    func swiftify() -> ICECandidate {
         .init(
             sdp: sdp,
             sdpMLineIndex: sdpMLineIndex,

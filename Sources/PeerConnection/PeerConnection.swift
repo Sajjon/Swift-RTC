@@ -9,55 +9,55 @@ import Foundation
 import WebRTC
 import RTCModels
 
-private extension PeerConnection {
-    actor Channels {
-        
-        private var channels: [DataChannelID: RTCDataChannel] = [:]
-        
-        init() {
-            
-        }
-        
-        enum Error: String, LocalizedError, Hashable {
-            case channelAlreadyExists
-        }
-        func containsID(_ id: DataChannelID) -> Bool {
-            channels.keys.contains(id)
-        }
-        func assertUnique(id: DataChannelID) throws {
-            guard !containsID(id) else {
-                throw Error.channelAlreadyExists
-            }
-        }
-        func insert(channel: RTCDataChannel, id: DataChannelID) async throws {
-            try assertUnique(id: id)
-            channels[id] = channel
-        }
-    }
-}
-
 public final class PeerConnection:
     NSObject,
+    Disconnecting,
     RTCPeerConnectionDelegate,
-    RTCDataChannelDelegate,
-    Identifiable
+    RTCDataChannelDelegate
 {
-   
+    internal struct ToChannel<Value: Sendable & Hashable>: Sendable, Hashable {
+        let value: Value
+        let channelID: DataChannelID
+        init(_ value: Value, channelID: DataChannelID) {
+            self.value = value
+            self.channelID = channelID
+        }
+    }
+    typealias DataToChannel = ToChannel<Data>
+    typealias ConnectionStatusToChannel = ToChannel<DataChannelState>
+    
     public let id: ID
+    public let negotiationRole: NegotiationRole
     public let config: WebRTCConfig
-
+    
     private let peerConnection: RTCPeerConnection
+    
+    typealias Channels = Disposables<Channel>
     private let channels: Channels = .init()
     
-    public let shouldNegotiateAsyncSequence: AsyncStream<Void>
-    private let shouldNegotiateAsyncContinuation: AsyncStream<Void>.Continuation
+    public let shouldNegotiateAsyncSequence: AsyncStream<NegotiationRole>
+    private let shouldNegotiateAsyncContinuation: AsyncStream<NegotiationRole>.Continuation
+    
+    public let generatedICECandidateAsyncSequence: AsyncStream<ICECandidate>
+    private let generatedICECandidateAsyncContinutation: AsyncStream<ICECandidate>.Continuation
+    
+    public let removeICECandidatesAsyncSequence: AsyncStream<[ICECandidate]>
+    private let removeICECandidatesAsyncContinutation: AsyncStream<[ICECandidate]>.Continuation
+    
+    private let dataToChannelAsyncSequence: AsyncStream<DataToChannel>
+    private let dataToChannelAsyncContinuation: AsyncStream<DataToChannel>.Continuation
+    
+    private let connectionStatusToChannelAsyncSequence: AsyncStream<ConnectionStatusToChannel>
+    private let connectionStatusToChannelAsyncContinuation: AsyncStream<ConnectionStatusToChannel>.Continuation
     
     public init(
         id: PeerConnectionID,
-        config: WebRTCConfig
+        config: WebRTCConfig,
+        negotiationRole: NegotiationRole
     ) throws {
         self.id = id
         self.config = config
+        self.negotiationRole = negotiationRole
         
         guard
             let peerConnection = RTCPeerConnectionFactory().peerConnection(
@@ -74,12 +74,16 @@ public final class PeerConnection:
         
         self.peerConnection = peerConnection
         
-        var shouldNegotiateAsyncContinuation: AsyncStream<Void>.Continuation!
-        let shouldNegotiateAsyncSequence: AsyncStream<Void> = .init { continuation in
-            shouldNegotiateAsyncContinuation = continuation
-        }
-        self.shouldNegotiateAsyncSequence = shouldNegotiateAsyncSequence
-        self.shouldNegotiateAsyncContinuation = shouldNegotiateAsyncContinuation
+        
+        (shouldNegotiateAsyncSequence, shouldNegotiateAsyncContinuation) = AsyncStream.streamWithContinuation(NegotiationRole.self)
+        
+        (generatedICECandidateAsyncSequence, generatedICECandidateAsyncContinutation) = AsyncStream.streamWithContinuation(ICECandidate.self)
+        
+        (removeICECandidatesAsyncSequence, removeICECandidatesAsyncContinutation) = AsyncStream.streamWithContinuation([ICECandidate].self)
+        
+        (dataToChannelAsyncSequence, dataToChannelAsyncContinuation) = AsyncStream.streamWithContinuation(DataToChannel.self)
+        
+        (connectionStatusToChannelAsyncSequence, connectionStatusToChannelAsyncContinuation) = AsyncStream.streamWithContinuation(ConnectionStatusToChannel.self)
         
         super.init()
         
@@ -103,18 +107,68 @@ private extension PeerConnection {
 
 // MARK: Channel
 public extension PeerConnection {
-    func newChannel(id: DataChannelID, config: DataChannelConfig) async throws {
+    
+    func newChannel(
+        id: DataChannelID,
+        config: DataChannelConfig
+    ) async throws -> Channel {
         try await channels.assertUnique(id: id)
         
         // This will trigger `shouldNegotiate`
-        guard let channel = peerConnection.dataChannel(
+        guard let dataChannel = peerConnection.dataChannel(
             forLabel: "Data", // move into config or param?
             configuration: config.rtc()
         ) else {
             throw Error.failedToCreateDataChannel
         }
-        channel.delegate = self
-        try await channels.insert(channel: channel, id: id)
+        dataChannel.delegate = self
+        
+        let channel = Channel(
+            id: id,
+            dataChannel: dataChannel
+        )
+        let task = Task { [unowned self] in
+            
+            await withThrowingTaskGroup(of: Void.self) { group in
+                
+                // Update connectionStatus
+                _ = group.addTaskUnlessCancelled { [unowned self] in
+                    try Task.checkCancellation()
+                    for await connectionStatus in self.connectionStatusToChannelAsyncSequence
+                        .filter({ $0.channelID == id })
+                        .map({ $0.value })
+                    {
+                        guard !Task.isCancelled else { return }
+                        await channel.updateConnectionStatus(connectionStatus)
+                    }
+                }
+                
+                // Receive data
+                _ = group.addTaskUnlessCancelled { [unowned self] in
+                    try Task.checkCancellation()
+                    for await data in self.dataToChannelAsyncSequence
+                        .filter({ $0.channelID == id })
+                        .map({ $0.value })
+                    {
+                        guard !Task.isCancelled else { return }
+                        await channel.received(data: data)
+                    }
+                }
+            }
+            
+      
+        }
+        try await channels.insert(.init(element: channel, task: task))
+        return channel
+    }
+}
+
+// MARK: Disconnecting
+public extension PeerConnection {
+    func disconnect() async {
+        await channels.cancelDisconnectAndRemoveAll()
+        peerConnection.close()
+        peerConnection.delegate = nil
     }
 }
 
@@ -132,7 +186,7 @@ public extension PeerConnection {
         try await peerConnection.setLocalDescription(localSDP)
         return Answer(sdp: localSDP.sdp)
     }
-
+    
     func setRemoteOffer(_ offer: Offer) async throws {
         let sdp = offer.rtc()
         try await peerConnection.setRemoteDescription(sdp)
@@ -152,7 +206,7 @@ public extension PeerConnection {
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
         debugPrint("peerConnection id: \(id), should Negotiate")
-        shouldNegotiateAsyncContinuation.yield()
+        shouldNegotiateAsyncContinuation.yield(negotiationRole)
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
@@ -164,7 +218,7 @@ public extension PeerConnection {
         let state = newState.swiftify()
         debugPrint("peerConnection id: \(id), didChange IceConnectionState to: \(state)")
     }
-
+    
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
         debugPrint("peerConnection id: \(id), didRemove stream: \(stream.streamId)")
     }
@@ -179,11 +233,15 @@ public extension PeerConnection {
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        let iceCandidate = candidate.swiftify()
         debugPrint("peerConnection id: \(id), didGenerate ICE")
+        generatedICECandidateAsyncContinutation.yield(iceCandidate)
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
         debugPrint("peerConnection id: \(id), didRemove #\(candidates.count) ICE candidates")
+        let iceCandidate = candidates.map { $0.swiftify() }
+        removeICECandidatesAsyncContinutation.yield(iceCandidate)
     }
     
 }
@@ -192,10 +250,14 @@ public extension PeerConnection {
 public extension PeerConnection {
     func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
         debugPrint("peerConnection id: \(id), dataChannel=\(dataChannel.channelId) didReceiveMessageWith #\(buffer.data.count) bytes")
+        let id = DataChannelID(id: dataChannel.channelId)
+        dataToChannelAsyncContinuation.yield(.init(buffer.data, channelID: id))
     }
     
     func dataChannelDidChangeState(_ dataChannel: RTCDataChannel) {
         let readyState = dataChannel.readyState.swiftify()
         debugPrint("peerConnection id: \(id), dataChannel=\(dataChannel.channelId) dataChannelDidChangeState to: \(readyState)")
+        let id = DataChannelID(id: dataChannel.channelId)
+        self.connectionStatusToChannelAsyncContinuation.yield(.init(readyState, channelID: id))
     }
 }

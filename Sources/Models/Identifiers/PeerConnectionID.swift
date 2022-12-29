@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct PeerConnectionID: Hashable {
+public struct PeerConnectionID: Sendable, Hashable {
     public let id: Int64
     public init(id: Int64) {
         self.id = id
@@ -16,3 +16,11 @@ public struct PeerConnectionID: Hashable {
         .init(id: .random(in: 0..<Int64.max))
     }
 }
+
+#if DEBUG
+extension PeerConnectionID: ExpressibleByIntegerLiteral {
+    public init(integerLiteral value: Int64) {
+        self.init(id: value)
+    }
+}
+#endif
