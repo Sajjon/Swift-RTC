@@ -9,5 +9,8 @@ import Foundation
 import WebRTC
 
 extension RTCDataChannel: @unchecked Sendable {}
+extension RTCIceCandidate: @unchecked Sendable {}
+extension RTCSessionDescription: @unchecked Sendable {}
 extension RTCPeerConnection: @unchecked Sendable {}
+extension RTCMediaConstraints: @unchecked Sendable {}
 

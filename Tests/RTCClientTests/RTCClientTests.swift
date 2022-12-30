@@ -13,7 +13,6 @@ import RTCPeerConnection
 import RTCSignaling
 import XCTest
 
-
 final class RTCClientTests: XCTestCase {
     
     
@@ -55,10 +54,11 @@ final class RTCClientTests: XCTestCase {
             signaling: answererSignaling
         )
         let pcID: PeerConnectionID = 0
-        try await initiator.newConnection(id: pcID, config: .default, negotiationRole: .initiator)
-        try await answerer.newConnection(id: pcID, config: .default, negotiationRole: .answerer)
+        let webRTCConfig: WebRTCConfig = .init(defineDtlsSrtpKeyAgreement: false)
+        try await initiator.newConnection(id: pcID, config: webRTCConfig, negotiationRole: .initiator)
+        try await answerer.newConnection(id: pcID, config: webRTCConfig, negotiationRole: .answerer)
         
-        let dcID: DataChannelID = 0
+        let dcID: DataChannelID = 237
         let dcConfig: DataChannelConfig = .init(isOrdered: true, isNegotiated: true)
         let initiatorToAnswererChannel = try await initiator.newChannel(
             peerConnectionID: pcID,
@@ -71,13 +71,12 @@ final class RTCClientTests: XCTestCase {
             config: dcConfig
         )
         
-        
         let initiatorConnectedToAnswerer = Task {
-            let _ = await initiatorToAnswererChannel.connectionStatusAsyncSequence.first(where: { $0 == .open })
+            let _ = await initiatorToAnswererChannel.readyStateAsyncSequence.first(where: { $0 == .open })
         }
 
         let answererConnectedToInitiator = Task {
-            let _ = await answererToInitiatorChannel.connectionStatusAsyncSequence.first(where: { $0 == .open })
+            let _ = await answererToInitiatorChannel.readyStateAsyncSequence.first(where: { $0 == .open })
         }
         let _ = (await initiatorConnectedToAnswerer.value, await answererConnectedToInitiator.value)
 

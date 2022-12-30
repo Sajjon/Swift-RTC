@@ -17,11 +17,9 @@ public actor Channel: Disconnecting {
     public let incomingMessageAsyncSequence: AsyncStream<Data>
     private let incomingMessageAsyncContinuation: AsyncStream<Data>.Continuation
    
-    public let connectionStatusAsyncSequence: AsyncStream<DataChannelState>
-    private let connectionStatusAsyncContinuation: AsyncStream<DataChannelState>.Continuation
-    deinit {
-        debugPrint("deinit!!!!")
-    }
+    public let readyStateAsyncSequence: AsyncStream<DataChannelState>
+    private let readyStateAsyncContinuation: AsyncStream<DataChannelState>.Continuation
+
     init(
         id: DataChannelID,
         dataChannel: RTCDataChannel
@@ -30,7 +28,7 @@ public actor Channel: Disconnecting {
         self.dataChannel = dataChannel
         (incomingMessageAsyncSequence, incomingMessageAsyncContinuation) = AsyncStream.streamWithContinuation(Data.self)
         
-        (connectionStatusAsyncSequence, connectionStatusAsyncContinuation) = AsyncStream.streamWithContinuation(DataChannelState.self)
+        (readyStateAsyncSequence, readyStateAsyncContinuation) = AsyncStream.streamWithContinuation(DataChannelState.self)
     }
 }
 
@@ -39,8 +37,8 @@ internal extension Channel {
     func received(data: Data) {
         incomingMessageAsyncContinuation.yield(data)
     }
-    func updateConnectionStatus(_ newStatus: DataChannelState) {
-        connectionStatusAsyncContinuation.yield(newStatus)
+    func updateReadyState(_ newStatus: DataChannelState) {
+        readyStateAsyncContinuation.yield(newStatus)
     }
 }
 

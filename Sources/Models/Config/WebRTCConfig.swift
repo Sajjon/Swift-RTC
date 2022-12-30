@@ -9,8 +9,10 @@ import Foundation
 
 public struct WebRTCConfig: Sendable, Hashable, Codable {
     public let iceServers: [ICEServer]
+    public let defineDtlsSrtpKeyAgreement: Bool
     
     public init(
+        defineDtlsSrtpKeyAgreement: Bool = true,
         iceServers: [ICEServer] = [
             "stun:stun.l.google.com:19302",
             "stun:stun1.l.google.com:19302",
@@ -19,6 +21,7 @@ public struct WebRTCConfig: Sendable, Hashable, Codable {
             "stun:stun4.l.google.com:19302"
         ]
     ) {
+        self.defineDtlsSrtpKeyAgreement = defineDtlsSrtpKeyAgreement
         self.iceServers = iceServers
     }
     

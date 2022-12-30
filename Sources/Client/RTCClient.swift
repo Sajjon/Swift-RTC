@@ -102,7 +102,7 @@ public extension RTCClient {
                         .prefix(1)
                     {
                         debugPrint("❄️ Received ICEs to remove from remote")
-                        peerConnection.removeICECandidates(icesToRemove)
+                        await peerConnection.removeICECandidates(icesToRemove)
                         debugPrint("❄️ Removed ICEs locally.")
                         break
                     }
