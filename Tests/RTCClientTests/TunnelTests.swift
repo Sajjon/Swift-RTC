@@ -9,6 +9,25 @@ import Foundation
 import XCTest
 @testable import RTCClient
 
+extension RTCClient {
+    
+    /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
+    /// exists.
+    func newDataTunnel(
+        peerConnectionID: PeerConnectionID,
+        channelID: DataChannelID,
+        config: DataChannelConfig
+    ) async throws -> Tunnel<Data> {
+        try await newTunnel(
+            peerConnectionID: peerConnectionID,
+            channelID: channelID,
+            config: config,
+            encoder: .passthrough,
+            decoder: .passthrough
+        )
+    }
+}
+
 final class TunnelTests: XCTestCase {
     func test_session() async throws {
         

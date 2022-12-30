@@ -39,16 +39,18 @@ public extension RTCClient {
     
     /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
     /// exists.
-    func newDataTunnel(
+    func newTunnel<Message>(
         peerConnectionID: PeerConnectionID,
         channelID: DataChannelID,
-        config: DataChannelConfig
-    ) async throws -> Tunnel<Data> {
+        config: DataChannelConfig,
+        encoder: Tunnel<Message>.Encoder,
+        decoder: Tunnel<Message>.Decoder
+    ) async throws -> Tunnel<Message> {
         let channel = try await newChannel(peerConnectionID: peerConnectionID, channelID: channelID, config: config)
         return Tunnel.live(
             channel: channel,
-            encoder: .passthrough,
-            decoder: .passthrough
+            encoder: encoder,
+            decoder: decoder
         )
     }
     
