@@ -198,17 +198,7 @@ public extension PeerConnection {
     
     @MainActor
     func addRemoteICE(_ ice: ICECandidate) async throws {
-        do {
-            try await self.peerConnection.add(ice.rtc())
-        } catch {
-            let nsError = error as NSError
-            if nsError.domain == "org.webrtc.RTC_OBJC_TYPE(RTCPeerConnection)" && nsError.code == 6 && (nsError.userInfo[NSLocalizedDescriptionKey] as? NSString) == "The remote description was null" {
-                print("\n\n⚠️⚠️⚠️ WARNING SUPRESSED ERROR ⚠️⚠️⚠️:\n `\(error.localizedDescription)`\n⚠️⚠️⚠️⚠️⚠️⚠️\n")
-            } else {
-                debugPrint("Failed to set ICE: \(String(describing: error))")
-                throw error
-            }
-        }
+        try await self.peerConnection.add(ice.rtc())
     }
     
     @MainActor

@@ -49,7 +49,6 @@ public extension Channel {
             fatalError("Channel not open!")
         }
         dataChannel.sendData(.init(data: data, isBinary: true))
-        debugPrint("🌍 Sending data over channel.id=\(dataChannel.channelId), label=\(dataChannel.label)")
     }
 }
 
