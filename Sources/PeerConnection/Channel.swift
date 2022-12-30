@@ -60,8 +60,8 @@ public extension Channel {
 // MARK: Disconnecting
 public extension Channel {
     func disconnect() async {
-        dataChannel.delegate = nil
         dataChannel.close()
+        dataChannel.delegate = nil
     }
 }
 

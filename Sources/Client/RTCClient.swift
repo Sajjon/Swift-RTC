@@ -86,7 +86,7 @@ public extension RTCClient {
                 _ = group.addTaskUnlessCancelled { [unowned self] in
                     // remote ICE to local
                     try Task.checkCancellation()
-                    for try await ice in signaling
+                    for try await ice in self.signaling
                         .receiveFromRemoteAsyncSequence()
                         .compactMap({ $0.addICE })
                         .prefix(1)
@@ -111,7 +111,7 @@ public extension RTCClient {
                 _ = group.addTaskUnlessCancelled { [unowned self] in
                     // remote ICEs to remove locally
                     try Task.checkCancellation()
-                    for try await icesToRemove in signaling
+                    for try await icesToRemove in self.signaling
                         .receiveFromRemoteAsyncSequence()
                         .compactMap({ $0.removeICEs })
                         .prefix(1)

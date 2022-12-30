@@ -29,15 +29,17 @@ public actor PeerConnection: Disconnecting {
         self.id = id
         self.config = config
         self.negotiationRole = negotiationRole
+       
         let delegate = PeerConnectionDelegate(peerConnectionID: id, negotiationRole: negotiationRole)
         self.delegate = delegate
+        
         var optionalConstraints: [String: String] = [:]
         if config.defineDtlsSrtpKeyAgreement {
             optionalConstraints[dtlsSRTPKeyAgreement] = kRTCMediaConstraintsValueTrue
         }
         
         guard
-            let peerConnection = RTCPeerConnectionFactory().peerConnection(
+            let peerConnection = Self.factory.peerConnection(
                 with: config.rtc(),
                 constraints: .init(
                     mandatoryConstraints: nil,
@@ -50,22 +52,25 @@ public actor PeerConnection: Disconnecting {
         }
         
         self.peerConnection = peerConnection
- 
-
-        
         self.peerConnection.delegate = delegate
     }
 }
 
+// NARK: Equatable
 public extension PeerConnection {
     static func == (lhs: PeerConnection, rhs: PeerConnection) -> Bool {
         lhs.id == rhs.id
     }
+}
+
+// NARK: Hashable
+public extension PeerConnection {
     nonisolated func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 }
 
+// MARK: Async Sequences
 public extension PeerConnection {
     nonisolated var shouldNegotiateAsyncSequence: AsyncStream<NegotiationRole> {
         delegate.shouldNegotiateAsyncSequence
@@ -121,14 +126,13 @@ public extension PeerConnection {
             dataChannel: dataChannel
         )
 
-        let task = Task { [unowned self] in
-            
+        let task = Task {
             await withThrowingTaskGroup(of: Void.self) { group in
                 
-                // Update connectionStatus
-                _ = group.addTaskUnlessCancelled { [unowned self] in
+                // Update DataChannel ReadyState
+                _ = group.addTaskUnlessCancelled { [unowned delegate] in
                     try Task.checkCancellation()
-                    for await readyState in self.delegate.dataChannelUpdateOfReadyStateAsyncSequence
+                    for await readyState in delegate.dataChannelUpdateOfReadyStateAsyncSequence
                         .filter({ $0.channelID == id })
                         .map({ $0.value })
                     {
@@ -138,9 +142,9 @@ public extension PeerConnection {
                 }
                 
                 // Receive data
-                _ = group.addTaskUnlessCancelled { [unowned self] in
+                _ = group.addTaskUnlessCancelled { [unowned delegate] in
                     try Task.checkCancellation()
-                    for await data in self.delegate.dataChannelUpdateOfMessageReceivedAsyncSequence
+                    for await data in delegate.dataChannelUpdateOfMessageReceivedAsyncSequence
                         .filter({ $0.channelID == id })
                         .map({ $0.value })
                     {
@@ -212,3 +216,16 @@ public extension PeerConnection {
     }
 }
 
+// MARK: Factory
+extension PeerConnection {
+    static let factory: RTCPeerConnectionFactory = {
+        RTCInitializeSSL()
+        let videoEncoderFactory = RTCDefaultVideoEncoderFactory()
+        let videoDecoderFactory = RTCDefaultVideoDecoderFactory()
+        return RTCPeerConnectionFactory(
+            encoderFactory: videoEncoderFactory,
+            decoderFactory: videoDecoderFactory
+        )
+    }()
+    
+}
