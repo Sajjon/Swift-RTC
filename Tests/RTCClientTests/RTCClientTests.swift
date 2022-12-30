@@ -31,12 +31,12 @@ final class RTCClientTests: XCTestCase {
             signaling: answererSignaling
         )
         let pcID: PeerConnectionID = 0
-        let webRTCConfig: WebRTCConfig = .init(defineDtlsSrtpKeyAgreement: false)
+        let webRTCConfig: WebRTCConfig = .default
         try await initiator.newConnection(id: pcID, config: webRTCConfig, negotiationRole: .initiator)
         try await answerer.newConnection(id: pcID, config: webRTCConfig, negotiationRole: .answerer)
         
         let dcID: DataChannelID = 0
-        let dcConfig: DataChannelConfig = .init(isOrdered: true, isNegotiated: true)
+        let dcConfig: DataChannelConfig = .default
         let initiatorToAnswererChannel = try await initiator.newChannel(
             peerConnectionID: pcID,
             channelID: dcID,
