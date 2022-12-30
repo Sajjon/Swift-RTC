@@ -164,6 +164,10 @@ public extension PeerConnection {
         peerConnection.close()
         peerConnection.delegate = nil
     }
+    
+    func closeChannel(id channelID: DataChannelID) async {
+        await channels.cancelDisconnectAndRemove(id: channelID)
+    }
 }
 
 

@@ -44,9 +44,14 @@ internal extension Channel {
 
 // MARK: Public
 public extension Channel {
-    func send(data: Data) {
+    
+    enum Error: String, LocalizedError, Sendable {
+        case channelIsNotOpen
+    }
+    
+    func send(data: Data) throws {
         guard dataChannel.readyState == .open else {
-            fatalError("Channel not open!")
+            throw Error.channelIsNotOpen
         }
         dataChannel.sendData(.init(data: data, isBinary: true))
     }

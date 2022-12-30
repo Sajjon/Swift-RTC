@@ -23,6 +23,21 @@ public actor RTCClient {
 
 public extension RTCClient {
     
+    /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
+    func disconnectChannel(
+        id channelID: DataChannelID,
+        peerConnectionID: PeerConnectionID
+    ) async throws {
+        let peerConnection = try await connections.get(id: peerConnectionID)
+        await peerConnection.closeChannel(id: channelID)
+    }
+    
+    func disconnectPeerConnection(id: PeerConnectionID) async {
+        await connections.cancelDisconnectAndRemove(id: id)
+    }
+    
+    /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
+    /// exists.
     func newChannel(
         peerConnectionID: PeerConnectionID,
         channelID: DataChannelID,

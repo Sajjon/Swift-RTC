@@ -72,14 +72,26 @@ final class RTCClientTests: XCTestCase {
         }
         
         Task {
-            await initiatorToAnswererChannel.send(data: Data("Hey Answerer".utf8))
+            try await initiatorToAnswererChannel.send(data: Data("Hey Answerer".utf8))
         }
 
         Task {
-            await answererToInitiatorChannel.send(data: Data("Hey Initiator".utf8))
+            try await answererToInitiatorChannel.send(data: Data("Hey Initiator".utf8))
         }
 
         await waitForExpectations(timeout: 3)
+        
+        try await initiator.disconnectChannel(id: dcID, peerConnectionID: pcID)
+        do {
+            try await initiatorToAnswererChannel.send(data: Data("This message should never reach answerer.".utf8))
+            XCTFail("Expected to fail when trying to send data over closed channel")
+        } catch {}
+        
+        try await answerer.disconnectChannel(id: dcID, peerConnectionID: pcID)
+        do {
+            try await answererToInitiatorChannel.send(data: Data("This message should never reach initiator.".utf8))
+            XCTFail("Expected to fail when trying to send data over closed channel")
+        } catch {}
     }
 }
 
