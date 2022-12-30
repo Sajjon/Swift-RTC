@@ -52,7 +52,7 @@ public extension SignalingClient.Unpacker where T == RTCPrimitive {
 public extension SignalingClient {
     struct Transport<T: Sendable>: Sendable {
         public typealias Submit = @Sendable (T) async throws -> Void
-        public typealias Subscribe = @Sendable () -> AsyncStream<T>
+        public typealias Subscribe = @Sendable () -> AnyAsyncSequence<T>
         public var submit: Submit
         public var subscribe: Subscribe
         public init(submit: @escaping Submit, subscribe: @escaping Subscribe) {
@@ -64,7 +64,16 @@ public extension SignalingClient {
 
 public extension SignalingClient.Transport {
     static func passthrough(stream: AsyncStream<T>, continuation: AsyncStream<T>.Continuation) -> Self {
-        .init(submit: { continuation.yield($0) }, subscribe: { stream })
+        let multicastSubject = AsyncThrowingPassthroughSubject<T, Error>()
+        return Self(
+            submit: { continuation.yield($0) },
+            subscribe: {
+                stream
+                    .multicast(multicastSubject)
+                    .autoconnect()
+                    .eraseToAnyAsyncSequence()
+            }
+        )
     }
 }
 
@@ -96,7 +105,7 @@ public extension SignalingClient {
             },
             receiveFromRemoteAsyncSequence: {
                 Task {
-                    for await data in transport.subscribe() {
+                    for try await data in transport.subscribe() {
                         try Task.checkCancellation()
                         let primitive = try await unpacker.unpack(data)
                         continuation.yield(primitive)
