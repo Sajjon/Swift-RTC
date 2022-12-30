@@ -10,10 +10,11 @@ import WebRTC
 import RTCModels
 
 extension DataChannelConfig {
-    func rtc() -> RTCDataChannelConfiguration {
+    func rtc(dataChannelID: DataChannelID) -> RTCDataChannelConfiguration {
         let config = RTCDataChannelConfiguration()
         config.isOrdered = isOrdered
         config.isNegotiated = isNegotiated
+        config.channelId = dataChannelID.id
         return config
     }
 }

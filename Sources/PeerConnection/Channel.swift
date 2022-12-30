@@ -19,7 +19,9 @@ public actor Channel: Disconnecting {
    
     public let connectionStatusAsyncSequence: AsyncStream<DataChannelState>
     private let connectionStatusAsyncContinuation: AsyncStream<DataChannelState>.Continuation
-    
+    deinit {
+        debugPrint("deinit!!!!")
+    }
     init(
         id: DataChannelID,
         dataChannel: RTCDataChannel
@@ -45,7 +47,11 @@ internal extension Channel {
 // MARK: Public
 public extension Channel {
     func send(data: Data) {
+        guard dataChannel.readyState == .open else {
+            fatalError("Channel not open!")
+        }
         dataChannel.sendData(.init(data: data, isBinary: true))
+        debugPrint("🌍 Sending data over channel.id=\(dataChannel.channelId), label=\(dataChannel.label)")
     }
 }
 

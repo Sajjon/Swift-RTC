@@ -27,7 +27,10 @@ let targets: [Target] = [
     ),
     .target(
         name: "RTCSignaling",
-        dependencies: ["RTCModels"],
+        dependencies: [
+            "AsyncExtensions",
+            "RTCModels",
+        ],
         path: "Sources/Signaling"
     ),
     .target(
@@ -67,6 +70,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/stasel/WebRTC", from: "108.0.0"),
+        .package(url: "https://github.com/sideeffect-io/AsyncExtensions", from: "0.5.1")
     ],
     targets: targets
 )

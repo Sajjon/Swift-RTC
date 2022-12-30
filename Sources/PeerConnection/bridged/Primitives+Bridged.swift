@@ -24,7 +24,8 @@ extension RTCIceCandidate {
         .init(
             sdp: sdp,
             sdpMLineIndex: sdpMLineIndex,
-            sdpMid: sdpMid
+            sdpMid: sdpMid,
+            serverUrl: serverUrl
         )
     }
 }

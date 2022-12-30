@@ -57,19 +57,54 @@ public extension RTCClient {
                 }
                 
                 // ICE Exchange
+                // ADD ICE
                 _ = group.addTaskUnlessCancelled { [unowned self] in
+                    // local ICE to remote
                     try Task.checkCancellation()
                     for await ice in peerConnection.generatedICECandidateAsyncSequence {
                         guard !Task.isCancelled else { return }
+                        debugPrint("❄️ Generated new ICE candidate, sending to remote...")
                         try await self.signaling.sendToRemote(.addICE(ice))
+                        debugPrint("❄️ Sent newly generated ICE candidate to remote")
+                    }
+                }
+                _ = group.addTaskUnlessCancelled { [unowned self] in
+                    // remote ICE to local
+                    try Task.checkCancellation()
+                    for try await ice in signaling
+                        .receiveFromRemoteAsyncSequence()
+                        .compactMap({ $0.addICE })
+                        .prefix(1)
+                    {
+                        debugPrint("❄️ Received ICE from remote")
+                        try await peerConnection.addRemoteICE(ice)
+                        debugPrint("❄️ Set ICE from remote.")
+                        break
                     }
                 }
                 
+                // REMOVE ICE
                 _ = group.addTaskUnlessCancelled { [unowned self] in
+                    // local ICE to remove from remote
                     try Task.checkCancellation()
                     for await ices in peerConnection.removeICECandidatesAsyncSequence {
                         guard !Task.isCancelled else { return }
                         try await self.signaling.sendToRemote(.removeICEs(ices))
+                    }
+                }
+                
+                _ = group.addTaskUnlessCancelled { [unowned self] in
+                    // remote ICEs to remove locally
+                    try Task.checkCancellation()
+                    for try await icesToRemove in signaling
+                        .receiveFromRemoteAsyncSequence()
+                        .compactMap({ $0.removeICEs })
+                        .prefix(1)
+                    {
+                        debugPrint("❄️ Received ICEs to remove from remote")
+                        peerConnection.removeICECandidates(icesToRemove)
+                        debugPrint("❄️ Removed ICEs locally.")
+                        break
                     }
                 }
             }
@@ -106,7 +141,7 @@ private extension RTCClient {
         
         // Receive `Answer` from remote
         debugPrint("☑️ Waiting for `Answer` from remote...")
-        for await answer in signaling
+        for try await answer in signaling
             .receiveFromRemoteAsyncSequence()
             .compactMap({ $0.answer })
             .prefix(1)
@@ -125,7 +160,7 @@ private extension RTCClient {
         debugPrint("👭 Negotiating as answerer 🥈")
         // Receive `Offer` from remote
         debugPrint("☑️ Waiting for `Offer` from remote...")
-        for await offer in signaling
+        for try await offer in signaling
             .receiveFromRemoteAsyncSequence()
             .compactMap({ $0.offer })
             .prefix(1)

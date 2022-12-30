@@ -7,13 +7,16 @@
 
 import Foundation
 
-public struct PeerConnectionID: Sendable, Hashable {
+public struct PeerConnectionID: Sendable, Hashable, CustomStringConvertible {
     public let id: Int64
     public init(id: Int64) {
         self.id = id
     }
     public static func random() -> Self {
         .init(id: .random(in: 0..<Int64.max))
+    }
+    public var description: String {
+        String(describing: id)
     }
 }
 

@@ -5,6 +5,7 @@
 //  Created by Alexander Cyon on 2022-12-28.
 //
 
+import AsyncExtensions
 import Foundation
 import RTCModels
 
@@ -23,7 +24,7 @@ public struct SignalingClient: Sendable {
 public extension SignalingClient {
     typealias SendToRemote = @Sendable (RTCPrimitive) async throws -> Void
     
-    typealias ReceiveFromRemoteAsyncSequence = @Sendable () -> AsyncStream<RTCPrimitive>
+    typealias ReceiveFromRemoteAsyncSequence = @Sendable () -> AnyAsyncSequence<RTCPrimitive>
   
 }
 
