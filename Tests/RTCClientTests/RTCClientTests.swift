@@ -21,30 +21,7 @@ final class RTCClientTests: XCTestCase {
         let initiatorReceivedMsgExp = expectation(description: "Initiator received msg")
         let answererReceivedMsgExp = expectation(description: "Answerer received msg")
         
-        let (signalingToInitiatorAsyncSequence, signalingToInitiatorAsyncContinuation) = AsyncStream.streamWithContinuation(RTCPrimitive.self)
-        let (signalingToAnswererAsyncSequence, signalingToAnswererAsyncContinuation) = AsyncStream.streamWithContinuation(RTCPrimitive.self)
-        
-        let initiatorSignalingMulticastSubject = AsyncThrowingPassthroughSubject<RTCPrimitive, Error>()
-        let initiatorSignaling = SignalingClient(
-            sendToRemote: { signalingToAnswererAsyncContinuation.yield($0 )},
-            receiveFromRemoteAsyncSequence: {
-                signalingToInitiatorAsyncSequence
-                .multicast(initiatorSignalingMulticastSubject)
-                .autoconnect()
-                .eraseToAnyAsyncSequence()
-                
-            }
-        )
-        
-        let answererSignalingMulticastSubject = AsyncThrowingPassthroughSubject<RTCPrimitive, Error>()
-        let answererSignaling = SignalingClient(
-            sendToRemote: { signalingToInitiatorAsyncContinuation.yield($0) },
-            receiveFromRemoteAsyncSequence: {
-                signalingToAnswererAsyncSequence
-                .multicast(answererSignalingMulticastSubject)
-                .autoconnect()
-                .eraseToAnyAsyncSequence() }
-        )
+        let (initiatorSignaling, answererSignaling) = SignalingClient.passthrough()
         
         let initiator = RTCClient(
             signaling: initiatorSignaling
@@ -58,7 +35,7 @@ final class RTCClientTests: XCTestCase {
         try await initiator.newConnection(id: pcID, config: webRTCConfig, negotiationRole: .initiator)
         try await answerer.newConnection(id: pcID, config: webRTCConfig, negotiationRole: .answerer)
         
-        let dcID: DataChannelID = 237
+        let dcID: DataChannelID = 0
         let dcConfig: DataChannelConfig = .init(isOrdered: true, isNegotiated: true)
         let initiatorToAnswererChannel = try await initiator.newChannel(
             peerConnectionID: pcID,
@@ -103,5 +80,36 @@ final class RTCClientTests: XCTestCase {
         }
 
         await waitForExpectations(timeout: 3)
+    }
+}
+
+extension AsyncStream<RTCPrimitive>.Iterator: @unchecked Sendable {}
+
+extension SignalingClient {
+    
+    static func streamed(
+        from streamFromX: AsyncStream<RTCPrimitive>,
+        to continuationToX: AsyncStream<RTCPrimitive>.Continuation
+    ) -> Self {
+        let multicastSubject = AsyncThrowingPassthroughSubject<RTCPrimitive, Error>()
+
+        return Self(
+            sendToRemote: { continuationToX.yield($0 )},
+            receiveFromRemoteAsyncSequence: {
+                streamFromX
+                .multicast(multicastSubject)
+                .autoconnect()
+                .eraseToAnyAsyncSequence()
+                
+            }
+        )
+    }
+    
+    static func passthrough() -> (caller: Self, answerer: Self) {
+        let (toCallerAsyncStream, fromCallerAsyncContinuation) = AsyncStream.streamWithContinuation(RTCPrimitive.self)
+        let (toAnswererAsyncStream, fromAnswererAsyncContinuation) = AsyncStream.streamWithContinuation(RTCPrimitive.self)
+        let caller = Self.streamed(from: toCallerAsyncStream, to: fromAnswererAsyncContinuation)
+        let answerer = Self.streamed(from: toAnswererAsyncStream, to: fromCallerAsyncContinuation)
+        return (caller, answerer)
     }
 }
