@@ -95,33 +95,13 @@ final class RTCClientTests: XCTestCase {
     }
 }
 
-extension AsyncStream<RTCPrimitive>.Iterator: @unchecked Sendable {}
-
 extension SignalingClient {
-    
-    static func streamed(
-        from streamFromX: AsyncStream<RTCPrimitive>,
-        to continuationToX: AsyncStream<RTCPrimitive>.Continuation
-    ) -> Self {
-        let multicastSubject = AsyncThrowingPassthroughSubject<RTCPrimitive, Error>()
 
-        return Self(
-            sendToRemote: { continuationToX.yield($0 )},
-            receiveFromRemoteAsyncSequence: {
-                streamFromX
-                .multicast(multicastSubject)
-                .autoconnect()
-                .eraseToAnyAsyncSequence()
-                
-            }
-        )
-    }
-    
     static func passthrough() -> (caller: Self, answerer: Self) {
-        let (toCallerAsyncStream, fromCallerAsyncContinuation) = AsyncStream.streamWithContinuation(RTCPrimitive.self)
-        let (toAnswererAsyncStream, fromAnswererAsyncContinuation) = AsyncStream.streamWithContinuation(RTCPrimitive.self)
-        let caller = Self.streamed(from: toCallerAsyncStream, to: fromAnswererAsyncContinuation)
-        let answerer = Self.streamed(from: toAnswererAsyncStream, to: fromCallerAsyncContinuation)
+        let (toCallerAsyncStream, fromCallerAsyncContinuation) = AsyncStream.streamWithContinuation(Data.self)
+        let (toAnswererAsyncStream, fromAnswererAsyncContinuation) = AsyncStream.streamWithContinuation(Data.self)
+        let caller = Self.passthrough(stream: toCallerAsyncStream, continuation: fromAnswererAsyncContinuation)
+        let answerer = Self.passthrough(stream: toAnswererAsyncStream, continuation: fromCallerAsyncContinuation)
         return (caller, answerer)
     }
 }

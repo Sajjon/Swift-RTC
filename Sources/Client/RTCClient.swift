@@ -32,6 +32,7 @@ public extension RTCClient {
         await peerConnection.closeChannel(id: channelID)
     }
     
+    /// Disconnects, cancels and removes the `PeerConnection` with `PeerConnectionID` of `id` if present.
     func disconnectPeerConnection(id: PeerConnectionID) async {
         await connections.cancelDisconnectAndRemove(id: id)
     }
@@ -47,6 +48,8 @@ public extension RTCClient {
         return try await peerConnection.newChannel(id: channelID, config: config)
     }
     
+    /// Creates a new `PeerConnection` with `PeerConnectionID` of `id` as `negotiationRole` using
+    /// `config` as `WebRTCConfig`.
     func newConnection(
         id: PeerConnectionID,
         config: WebRTCConfig,
@@ -54,6 +57,7 @@ public extension RTCClient {
     ) async throws {
         
         try await connections.assertUnique(id: id)
+        
         let peerConnection = try PeerConnection(
             id: id,
             config: config,
@@ -134,6 +138,7 @@ public extension RTCClient {
     }
 }
 
+// MARK: Private
 private extension RTCClient {
     func negotiate(role negotiationRole: NegotiationRole, peerConnection: PeerConnection) async throws {
         switch negotiationRole {

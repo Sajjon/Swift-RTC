@@ -23,8 +23,5 @@ public struct SignalingClient: Sendable {
 
 public extension SignalingClient {
     typealias SendToRemote = @Sendable (RTCPrimitive) async throws -> Void
-    
     typealias ReceiveFromRemoteAsyncSequence = @Sendable () -> AnyAsyncSequence<RTCPrimitive>
-  
 }
-
