@@ -10,7 +10,7 @@ import Foundation
 import RTCModels
 
 
-public extension Tunnel where ReadyState == DataChannelState {
+public extension Tunnel where ID == DataChannelID, ReadyState == DataChannelState {
     static func live(
         channel: Channel,
         encoder: Encoder,
@@ -26,14 +26,14 @@ public extension Tunnel where ReadyState == DataChannelState {
         let task = Task {
             await withThrowingTaskGroup(of: Void.self) { group in
                 _ = group.addTaskUnlessCancelled {
-                    for await readyState in await channel.readyStateAsyncSequence {
+                    for await readyState in channel.readyStateAsyncSequence {
                         try Task.checkCancellation()
                         readyStateAsyncContinuation.yield(readyState)
                     }
                 }
                 
                 _ = group.addTaskUnlessCancelled {
-                    for await data in await channel.incomingMessageAsyncSequence {
+                    for await data in channel.incomingMessageAsyncSequence {
                         try Task.checkCancellation()
                         let message = try await decoder.decode(data)
                         inMessagesAsyncContinuation.yield(message)
@@ -43,6 +43,7 @@ public extension Tunnel where ReadyState == DataChannelState {
         }
         
         return Self(
+            getID: { channel.id },
             readyStateUpdates: {
                 readyStateAsyncSequence
                     .multicast(readyStateMulticastSubject)

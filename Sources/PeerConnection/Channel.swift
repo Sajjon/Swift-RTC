@@ -9,6 +9,18 @@ import Foundation
 import WebRTC
 import RTCModels
 
+public extension Tunnel
+where
+ID == DataChannelID,
+ReadyState == DataChannelState,
+IncomingMessage == Data,
+OutgoingMessage == Data
+{
+    static func dataChannelTunnel(id: DataChannelID, dataChannel: RTCDataChannel) -> Self {
+        fatalError()
+    }
+}
+
 public actor Channel: Disconnecting {
     
     public let id: DataChannelID

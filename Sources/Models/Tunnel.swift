@@ -1,23 +1,27 @@
 import Foundation
 import AsyncExtensions
 
-public struct Tunnel<ReadyState, IncomingMessage, OutgoingMessage>: Sendable
+public struct Tunnel<ID, ReadyState, IncomingMessage, OutgoingMessage>: Sendable
 where
+ID: Sendable & Equatable,
 ReadyState: Sendable & Equatable,
 IncomingMessage: Sendable & Equatable,
 OutgoingMessage: Sendable & Equatable
 {
+    public var getID: GetID
     public var readyStateUpdates: ReadyStateUpdates
     public var incomingMessages: IncomingMessages
     public var send: Send
     public var close: Close
     
     public init(
+        getID: @escaping GetID,
         readyStateUpdates: @escaping ReadyStateUpdates,
         incomingMessages: @escaping IncomingMessages,
         send: @escaping Send,
         close: @escaping Close
     ) {
+        self.getID = getID
         self.readyStateUpdates = readyStateUpdates
         self.incomingMessages = incomingMessages
         self.send = send
@@ -26,6 +30,7 @@ OutgoingMessage: Sendable & Equatable
 }
 
 public extension Tunnel {
+    typealias GetID = @Sendable () -> ID
     typealias ReadyStateUpdates = @Sendable () async throws ->
     AnyAsyncSequence<ReadyState>
     typealias IncomingMessages = @Sendable () async throws ->

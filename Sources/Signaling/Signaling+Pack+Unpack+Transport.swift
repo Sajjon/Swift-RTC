@@ -50,10 +50,10 @@ public extension SignalingClient.Unpacker where T == RTCPrimitive {
 
 // MARK: Transport
 public extension SignalingClient {
-    typealias Transport<InOutMessage: Sendable & Equatable> = Tunnel<Never, InOutMessage, InOutMessage>
+    typealias Transport<ID: Sendable & Equatable, InOutMessage: Sendable & Equatable> = Tunnel<ID, Never, InOutMessage, InOutMessage>
 }
 
-public extension SignalingClient.Transport where IncomingMessage == OutgoingMessage {
+public extension SignalingClient.Transport where ID == Never, IncomingMessage == OutgoingMessage {
 
     typealias InOutMessage = IncomingMessage
 
@@ -65,8 +65,9 @@ public extension SignalingClient.Transport where IncomingMessage == OutgoingMess
         let multicastSubject = AsyncThrowingPassthroughSubject<InOutMessage, Error>()
         
         return Self(
+            getID: { fatalError("No ID") },
             readyStateUpdates: {
-                [].async.eraseToAnyAsyncSequence()
+                fatalError("No Ready State updates")
             },
             incomingMessages: {
                 stream
@@ -95,15 +96,17 @@ public extension SignalingClient {
 }
 
 public extension SignalingClient {
- 
-    static func with<T>(
-        packer: Packer<T> = .json,
-        unpacker: Unpacker<T> = .json,
-        transport: Transport<T>
-    ) -> Self where T: Sendable {
+    
+    static func with<ID, Message>(
+        packer: Packer<Message> = .json,
+        unpacker: Unpacker<Message> = .json,
+        transport: Transport<ID, Message>
+    ) -> Self
+    where ID: Sendable & Hashable, Message: Sendable & Hashable
+    {
         let multicastSubject = AsyncThrowingPassthroughSubject<RTCPrimitive, Error>()
         let (stream, continuation) = AsyncStream.streamWithContinuation(RTCPrimitive.self)
-
+        
         return Self(
             sendToRemote: { rtcPrimitive in
                 let data = try await packer.pack(rtcPrimitive)

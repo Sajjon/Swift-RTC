@@ -17,7 +17,7 @@ extension RTCClient {
         peerConnectionID: PeerConnectionID,
         channelID: DataChannelID,
         config: DataChannelConfig
-    ) async throws -> Tunnel<DataChannelState, Data, Data> {
+    ) async throws -> Tunnel<DataChannelID, DataChannelState, Data, Data> {
         try await newTunnel(
             peerConnectionID: peerConnectionID,
             channelID: channelID,
