@@ -17,7 +17,7 @@ extension RTCClient {
         peerConnectionID: PeerConnectionID,
         channelID: DataChannelID,
         config: DataChannelConfig
-    ) async throws -> Tunnel<Data> {
+    ) async throws -> Tunnel<DataChannelState, Data, Data> {
         try await newTunnel(
             peerConnectionID: peerConnectionID,
             channelID: channelID,
@@ -63,34 +63,34 @@ final class TunnelTests: XCTestCase {
         )
         
         let initiatorConnectedToAnswerer = Task {
-            let _ = try await initiatorToAnswererTunnel.subscribeToReadyState().first(where: { $0 == .open })
+            let _ = try await initiatorToAnswererTunnel.readyStateUpdates().first(where: { $0 == .open })
         }
         
         let answererConnectedToInitiator = Task {
-            let _ = try await answererToInitiatorTunnel.subscribeToReadyState().first(where: { $0 == .open })
+            let _ = try await answererToInitiatorTunnel.readyStateUpdates().first(where: { $0 == .open })
         }
         let _ = (try await initiatorConnectedToAnswerer.value, try await answererConnectedToInitiator.value)
         
         Task {
-            for try await msg in try await initiatorToAnswererTunnel.subscribeToIncomingMessages().prefix(1) {
+            for try await msg in try await initiatorToAnswererTunnel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Initiator".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 initiatorReceivedMsgExp.fulfill()
             }
         }
         
         Task {
-            for try await msg in try await answererToInitiatorTunnel.subscribeToIncomingMessages().prefix(1) {
+            for try await msg in try await answererToInitiatorTunnel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Answerer".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 answererReceivedMsgExp.fulfill()
             }
         }
         
         Task {
-            try await initiatorToAnswererTunnel.push(Data("Hey Answerer".utf8))
+            try await initiatorToAnswererTunnel.send(Data("Hey Answerer".utf8))
         }
         
         Task {
-            try await answererToInitiatorTunnel.push(Data("Hey Initiator".utf8))
+            try await answererToInitiatorTunnel.send(Data("Hey Initiator".utf8))
         }
         
         await waitForExpectations(timeout: 3)

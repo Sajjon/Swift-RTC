@@ -50,28 +50,34 @@ public extension SignalingClient.Unpacker where T == RTCPrimitive {
 
 // MARK: Transport
 public extension SignalingClient {
-    struct Transport<T: Sendable>: Sendable {
-        public typealias Submit = @Sendable (T) async throws -> Void
-        public typealias Subscribe = @Sendable () -> AnyAsyncSequence<T>
-        public var submit: Submit
-        public var subscribe: Subscribe
-        public init(submit: @escaping Submit, subscribe: @escaping Subscribe) {
-            self.submit = submit
-            self.subscribe = subscribe
-        }
-    }
+    typealias Transport<InOutMessage: Sendable & Equatable> = Tunnel<Never, InOutMessage, InOutMessage>
 }
 
-public extension SignalingClient.Transport {
-    static func passthrough(stream: AsyncStream<T>, continuation: AsyncStream<T>.Continuation) -> Self {
-        let multicastSubject = AsyncThrowingPassthroughSubject<T, Error>()
+public extension SignalingClient.Transport where IncomingMessage == OutgoingMessage {
+
+    typealias InOutMessage = IncomingMessage
+
+    static func passthrough(
+        stream: AsyncStream<InOutMessage>,
+        continuation: AsyncStream<InOutMessage>.Continuation
+    ) -> Self {
+        
+        let multicastSubject = AsyncThrowingPassthroughSubject<InOutMessage, Error>()
+        
         return Self(
-            submit: { continuation.yield($0) },
-            subscribe: {
+            readyStateUpdates: {
+                [].async.eraseToAnyAsyncSequence()
+            },
+            incomingMessages: {
                 stream
                     .multicast(multicastSubject)
                     .autoconnect()
                     .eraseToAnyAsyncSequence()
+                
+            }, send: {
+                continuation.yield($0)
+            }, close: {
+                continuation.finish()
             }
         )
     }
@@ -101,11 +107,11 @@ public extension SignalingClient {
         return Self(
             sendToRemote: { rtcPrimitive in
                 let data = try await packer.pack(rtcPrimitive)
-                try await transport.submit(data)
+                try await transport.send(data)
             },
             receiveFromRemoteAsyncSequence: {
                 Task {
-                    for try await data in transport.subscribe() {
+                    for try await data in try await transport.incomingMessages() {
                         try Task.checkCancellation()
                         let primitive = try await unpacker.unpack(data)
                         continuation.yield(primitive)

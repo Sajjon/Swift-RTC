@@ -8,7 +8,7 @@ let develop = true
 let targets: [Target] = [
     .target(
         name: "RTCModels",
-        dependencies: [],
+        dependencies: ["AsyncExtensions"],
         path: "Sources/Models"
     ),
     .target(
