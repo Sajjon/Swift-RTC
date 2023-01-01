@@ -9,8 +9,6 @@ import AsyncExtensions
 import Foundation
 import RTCModels
 
-extension AsyncStream.Iterator: @unchecked Sendable where AsyncStream.Iterator.Element: Sendable {}
-
 // MARK: Packer
 public extension SignalingClient {
     struct Packer<T: Sendable>: Sendable {
@@ -50,32 +48,23 @@ public extension SignalingClient.Unpacker where T == RTCPrimitive {
 
 // MARK: Transport
 public extension SignalingClient {
-    typealias Transport<ID: Sendable & Equatable, InOutMessage: Sendable & Equatable> = Tunnel<ID, Never, InOutMessage, InOutMessage>
+    typealias Transport<ID: Sendable & Hashable, InOutMessage: Sendable & Equatable> = Tunnel<ID, Never, InOutMessage, InOutMessage>
 }
+
 
 public extension SignalingClient.Transport where ID == Never, IncomingMessage == OutgoingMessage {
 
     typealias InOutMessage = IncomingMessage
 
     static func passthrough(
-        stream: AsyncStream<InOutMessage>,
+        stream incomingMessagesAsyncStream: AsyncStream<InOutMessage>,
         continuation: AsyncStream<InOutMessage>.Continuation
     ) -> Self {
-        
-        let multicastSubject = AsyncThrowingPassthroughSubject<InOutMessage, Error>()
-        
-        return Self(
-            getID: { fatalError("No ID") },
-            readyStateUpdates: {
-                fatalError("No Ready State updates")
-            },
-            incomingMessages: {
-                stream
-                    .multicast(multicastSubject)
-                    .autoconnect()
-                    .eraseToAnyAsyncSequence()
-                
-            }, send: {
+        return Self.live(
+            getID: fatalError("No ID"),
+            readyStateAsyncStream: AsyncStream(unfolding: { fatalError("No ready state") }),
+            incomingMessagesAsyncStream: incomingMessagesAsyncStream,
+            send: {
                 continuation.yield($0)
             }, close: {
                 continuation.finish()

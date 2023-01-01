@@ -16,7 +16,7 @@ public actor PeerConnection: Disconnecting {
     
     private let peerConnection: RTCPeerConnection
     
-    typealias Channels = Disposables<Channel>
+    typealias Channels = Disposables<Tunnel<DataChannelID, DataChannelState, Data, Data>>
     private let channels: Channels = .init()
 
     private let delegate: PeerConnectionDelegate
@@ -30,7 +30,11 @@ public actor PeerConnection: Disconnecting {
         self.config = config
         self.negotiationRole = negotiationRole
        
-        let delegate = PeerConnectionDelegate(peerConnectionID: id, negotiationRole: negotiationRole)
+        let delegate = PeerConnectionDelegate(
+            peerConnectionID: id,
+            negotiationRole: negotiationRole
+        )
+        
         self.delegate = delegate
         
         var optionalConstraints: [String: String] = [:]
@@ -107,7 +111,8 @@ public extension PeerConnection {
     func newChannel(
         id: DataChannelID,
         config: DataChannelConfig
-    ) async throws -> Channel {
+    ) async throws -> Tunnel<DataChannelID, DataChannelState, Data, Data> {
+        
         try await channels.assertUnique(id: id)
         
         // This will trigger `shouldNegotiate`
@@ -118,45 +123,24 @@ public extension PeerConnection {
             throw Error.failedToCreateDataChannel
         }
 
-        //assert(dataChannel.channelId == id.id, "Expected channelId to be: \(id.id), but was: \(dataChannel.channelId)")
-        dataChannel.delegate = delegate
-
-        let channel = Channel(
-            id: id,
-            dataChannel: dataChannel
+        let dataChannelDelegate = DataChannelDelegate(
+            peerConnectionID: self.id,
+            dataChannelID: id
+        )
+        
+        dataChannel.delegate = dataChannelDelegate
+        
+        let channel = Tunnel.live(
+            dataChannel: dataChannel,
+            dataChannelDelegate: dataChannelDelegate
         )
 
-        let task = Task {
-            await withThrowingTaskGroup(of: Void.self) { group in
-                
-                // Update DataChannel ReadyState
-                _ = group.addTaskUnlessCancelled { [unowned delegate] in
-                    try Task.checkCancellation()
-                    for await readyState in delegate.dataChannelUpdateOfReadyStateAsyncSequence
-                        .filter({ $0.channelID == id })
-                        .map({ $0.value })
-                    {
-                        guard !Task.isCancelled else { return }
-                        await channel.updateReadyState(readyState)
-                    }
-                }
-                
-                // Receive data
-                _ = group.addTaskUnlessCancelled { [unowned delegate] in
-                    try Task.checkCancellation()
-                    for await data in delegate.dataChannelUpdateOfMessageReceivedAsyncSequence
-                        .filter({ $0.channelID == id })
-                        .map({ $0.value })
-                    {
-                        guard !Task.isCancelled else { return }
-                        await channel.received(data: data)
-                    }
-                }
-            }
-            
-      
-        }
-        try await channels.insert(.init(element: channel, task: task))
+        try await channels.insert(
+            .init(
+                element: channel,
+                referencingStrongly: dataChannelDelegate
+            )
+        )
         return channel
     }
 }

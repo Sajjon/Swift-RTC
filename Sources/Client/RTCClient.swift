@@ -46,23 +46,21 @@ public extension RTCClient {
         encoder: Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg>.Encoder,
         decoder: Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg>.Decoder
     ) async throws -> Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg> {
-        let channel = try await newChannel(peerConnectionID: peerConnectionID, channelID: channelID, config: config)
+        
+        // Create a new RTCDataChannel, wrapped in a `Tunnel`
+        let tunnel = try await newChannel(
+            peerConnectionID: peerConnectionID,
+            channelID: channelID,
+            config: config
+        )
+        
+        // Create a new Application Layer `Tunnel` which encodes/decodes messages using
+        // `encoder` and `decoder`.
         return Tunnel.live(
-            channel: channel,
+            tunnel: tunnel,
             encoder: encoder,
             decoder: decoder
         )
-    }
-    
-    /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
-    /// exists.
-    func newChannel(
-        peerConnectionID: PeerConnectionID,
-        channelID: DataChannelID,
-        config: DataChannelConfig
-    ) async throws -> Channel {
-        let peerConnection = try await connections.get(id: peerConnectionID)
-        return try await peerConnection.newChannel(id: channelID, config: config)
     }
     
     /// Creates a new `PeerConnection` with `PeerConnectionID` of `id` as `negotiationRole` using
@@ -152,6 +150,21 @@ public extension RTCClient {
                 task: connectTask
             )
         )
+    }
+}
+
+// MARK: Internal
+internal extension RTCClient {
+    
+    /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
+    /// exists.
+    func newChannel(
+        peerConnectionID: PeerConnectionID,
+        channelID: DataChannelID,
+        config: DataChannelConfig
+    ) async throws ->  Tunnel<DataChannelID, DataChannelState, Data, Data> {
+        let peerConnection = try await connections.get(id: peerConnectionID)
+        return try await peerConnection.newChannel(id: channelID, config: config)
     }
 }
 

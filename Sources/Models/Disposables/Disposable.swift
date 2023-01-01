@@ -12,13 +12,16 @@ public actor Disposable<Element>: Sendable, Hashable, Identifiable where Element
     public let element: Element
     
     private var task: Task<Void, Never>?
+    private var referencingStrongly: (AnyObject & Sendable)?
     
     public init(
         element: Element,
-        task: Task<Void, Never>
+        task: Task<Void, Never>? = nil,
+        referencingStrongly: (AnyObject & Sendable)? = nil
     ) {
         self.element = element
         self.task = task
+        self.referencingStrongly = referencingStrongly
     }
 }
 
@@ -28,6 +31,7 @@ public extension Disposable {
         await element.disconnect()
         task?.cancel()
         task = nil
+        referencingStrongly = nil
     }
 }
 

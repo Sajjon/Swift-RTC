@@ -12,8 +12,7 @@ import RTCModels
 internal final class PeerConnectionDelegate:
     NSObject,
     Sendable,
-    RTCPeerConnectionDelegate,
-    RTCDataChannelDelegate
+    RTCPeerConnectionDelegate
 {
     internal let shouldNegotiateAsyncSequence: AsyncStream<NegotiationRole>
     private let shouldNegotiateAsyncContinuation: AsyncStream<NegotiationRole>.Continuation
@@ -27,12 +26,7 @@ internal final class PeerConnectionDelegate:
     internal let removeICECandidatesAsyncSequence: AsyncStream<[ICECandidate]>
     private let removeICECandidatesAsyncContinutation: AsyncStream<[ICECandidate]>.Continuation
     
-    internal let dataChannelUpdateOfMessageReceivedAsyncSequence: AsyncStream<DataChannelUpdateOfMessageReceived>
-    private let dataChannelUpdateOfMessageReceivedAsyncContinuation: AsyncStream<DataChannelUpdateOfMessageReceived>.Continuation
-    
-    internal let dataChannelUpdateOfReadyStateAsyncSequence: AsyncStream<DataChannelUpdateOfReadyState>
-    private let dataChannelUpdateOfReadyStateAsyncContinuation: AsyncStream<DataChannelUpdateOfReadyState>.Continuation
-    
+
     private let negotiationRole: NegotiationRole
     private let id: PeerConnectionID
     
@@ -46,10 +40,7 @@ internal final class PeerConnectionDelegate:
         (generatedICECandidateAsyncSequence, generatedICECandidateAsyncContinutation) = AsyncStream.streamWithContinuation(ICECandidate.self)
         
         (removeICECandidatesAsyncSequence, removeICECandidatesAsyncContinutation) = AsyncStream.streamWithContinuation([ICECandidate].self)
-        
-        (dataChannelUpdateOfMessageReceivedAsyncSequence, dataChannelUpdateOfMessageReceivedAsyncContinuation) = AsyncStream.streamWithContinuation(DataChannelUpdateOfMessageReceived.self)
-        
-        (dataChannelUpdateOfReadyStateAsyncSequence, dataChannelUpdateOfReadyStateAsyncContinuation) = AsyncStream.streamWithContinuation(DataChannelUpdateOfReadyState.self)
+
         
         super.init()
     }
@@ -104,34 +95,4 @@ internal extension PeerConnectionDelegate {
         removeICECandidatesAsyncContinutation.yield(iceCandidate)
     }
     
-}
-
-// MARK: RTCDataChannelDelegate
-internal extension PeerConnectionDelegate {
-    func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
-        debugPrint("peerConnection id: \(id), dataChannel=\(dataChannel.channelId) didReceiveMessageWith #\(buffer.data.count) bytes")
-        let id = DataChannelID(label: dataChannel.label)
-        dataChannelUpdateOfMessageReceivedAsyncContinuation.yield(.init(buffer.data, channelID: id))
-    }
-    
-    func dataChannelDidChangeState(_ dataChannel: RTCDataChannel) {
-        let readyState = dataChannel.readyState.swiftify()
-        debugPrint("peerConnection id: \(id), dataChannel=\(dataChannel.channelId) dataChannelDidChangeState to: \(readyState)")
-        let id = DataChannelID(label: dataChannel.label)
-        dataChannelUpdateOfReadyStateAsyncContinuation.yield(.init(readyState, channelID: id))
-    }
-}
-
-internal extension PeerConnectionDelegate {
-    
-    struct DataChannelUpdateOf<Value: Sendable & Hashable>: Sendable, Hashable {
-        let value: Value
-        let channelID: DataChannelID
-        init(_ value: Value, channelID: DataChannelID) {
-            self.value = value
-            self.channelID = channelID
-        }
-    }
-    typealias DataChannelUpdateOfMessageReceived = DataChannelUpdateOf<Data>
-    typealias DataChannelUpdateOfReadyState = DataChannelUpdateOf<DataChannelState>
 }

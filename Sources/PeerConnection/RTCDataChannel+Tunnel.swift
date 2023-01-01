@@ -12,7 +12,7 @@ import RTCModels
 
 public extension Tunnel where ID == DataChannelID, ReadyState == DataChannelState {
     static func live(
-        channel: Channel,
+        tunnel: Tunnel<DataChannelID, DataChannelState, Data, Data>,
         encoder: Encoder,
         decoder: Decoder
     ) -> Self {
@@ -26,14 +26,14 @@ public extension Tunnel where ID == DataChannelID, ReadyState == DataChannelStat
         let task = Task {
             await withThrowingTaskGroup(of: Void.self) { group in
                 _ = group.addTaskUnlessCancelled {
-                    for await readyState in channel.readyStateAsyncSequence {
+                    for try await readyState in try await tunnel.readyStateUpdates() {
                         try Task.checkCancellation()
                         readyStateAsyncContinuation.yield(readyState)
                     }
                 }
                 
                 _ = group.addTaskUnlessCancelled {
-                    for await data in channel.incomingMessageAsyncSequence {
+                    for try await data in try await tunnel.incomingMessages() {
                         try Task.checkCancellation()
                         let message = try await decoder.decode(data)
                         inMessagesAsyncContinuation.yield(message)
@@ -42,27 +42,17 @@ public extension Tunnel where ID == DataChannelID, ReadyState == DataChannelStat
             }
         }
         
-        return Self(
-            getID: { channel.id },
-            readyStateUpdates: {
-                readyStateAsyncSequence
-                    .multicast(readyStateMulticastSubject)
-                    .autoconnect()
-                    .eraseToAnyAsyncSequence()
-            },
-            incomingMessages: {
-                 inMessagesAsyncSequence
-                    .multicast(incomingMessagesMulticastSubject)
-                    .autoconnect()
-                    .eraseToAnyAsyncSequence()
-            },
+        return Self.live(
+            getID: tunnel.id,
+            readyStateAsyncStream: readyStateAsyncSequence,
+            incomingMessagesAsyncStream: inMessagesAsyncSequence,
             send: { message in
                 let data = try await encoder.encode(message)
-                try await channel.send(data: data)
+                try await tunnel.send(data)
             },
             close: {
                 task.cancel()
-                await channel.disconnect()
+                await tunnel.disconnect()
             }
         )
     }

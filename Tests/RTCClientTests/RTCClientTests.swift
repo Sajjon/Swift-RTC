@@ -49,47 +49,47 @@ final class RTCClientTests: XCTestCase {
         )
         
         let initiatorConnectedToAnswerer = Task {
-            let _ = await initiatorToAnswererChannel.readyStateAsyncSequence.first(where: { $0 == .open })
+            let _ = try await initiatorToAnswererChannel.readyStateUpdates().first(where: { $0 == .open })
         }
 
         let answererConnectedToInitiator = Task {
-            let _ = await answererToInitiatorChannel.readyStateAsyncSequence.first(where: { $0 == .open })
+            let _ = try await answererToInitiatorChannel.readyStateUpdates().first(where: { $0 == .open })
         }
-        let _ = (await initiatorConnectedToAnswerer.value, await answererConnectedToInitiator.value)
+        let _ = (try await initiatorConnectedToAnswerer.value, try await answererConnectedToInitiator.value)
 
         Task {
-            for await msg in await initiatorToAnswererChannel.incomingMessageAsyncSequence.prefix(1) {
+            for try await msg in try await initiatorToAnswererChannel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Initiator".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 initiatorReceivedMsgExp.fulfill()
             }
         }
 
         Task {
-            for await msg in await answererToInitiatorChannel.incomingMessageAsyncSequence.prefix(1) {
+            for try await msg in try await answererToInitiatorChannel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Answerer".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 answererReceivedMsgExp.fulfill()
             }
         }
         
         Task {
-            try await initiatorToAnswererChannel.send(data: Data("Hey Answerer".utf8))
+            try await initiatorToAnswererChannel.send(Data("Hey Answerer".utf8))
         }
 
         Task {
-            try await answererToInitiatorChannel.send(data: Data("Hey Initiator".utf8))
+            try await answererToInitiatorChannel.send(Data("Hey Initiator".utf8))
         }
 
         await waitForExpectations(timeout: 3)
         
         try await initiator.disconnectChannel(id: dcID, peerConnectionID: pcID)
         do {
-            try await initiatorToAnswererChannel.send(data: Data("This message should never reach answerer.".utf8))
+            try await initiatorToAnswererChannel.send(Data("This message should never reach answerer.".utf8))
             XCTFail("Expected to fail when trying to send data over closed channel")
         } catch {}
         
         try await answerer.disconnectChannel(id: dcID, peerConnectionID: pcID)
         do {
-            try await answererToInitiatorChannel.send(data: Data("This message should never reach initiator.".utf8))
+            try await answererToInitiatorChannel.send(Data("This message should never reach initiator.".utf8))
             XCTFail("Expected to fail when trying to send data over closed channel")
         } catch {}
     }
