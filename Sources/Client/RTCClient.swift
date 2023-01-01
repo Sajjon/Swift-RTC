@@ -8,13 +8,13 @@
 import RTCPeerConnection
 import RTCSignaling
 
-public actor RTCClient {
+public actor RTCClient<SignalingServerMessage> where SignalingServerMessage: Sendable & RTCPrimitiveEventProtocol & SIPEventProtocol & Equatable & Codable {
     typealias Connections = Disposables<PeerConnection>
-    private let signaling: SignalingClient
+    private let signaling: SignalingClient<SignalingServerMessage>
     private let connections: Connections = .init()
 
     public init(
-        signaling: SignalingClient
+        signaling: SignalingClient<SignalingServerMessage>
     ) {
         self.signaling = signaling
     }
@@ -74,18 +74,47 @@ public extension RTCClient {
             config: config,
             negotiationRole: negotiationRole
         )
+        
+        @Sendable func reconnect(triggeredBy: RTCEvent) {
+            // I think we should use `detatched` since caller of this might be in a Task which gets cancelled by
+            // the reconnect, effecively cancelling this reconnect? However, `detatched` might bypass that?
+            Task.detached(priority: .high) { [unowned self] in
+                await self.connections.cancelDisconnectAndRemove(id: id)
+                try await self.newConnection(id: id, config: config, negotiationRole: negotiationRole)
+            }
+        }
 
         let connectTask = Task {
             await withThrowingTaskGroup(of: Void.self) { group in
 
-                // // RECONNECT
-                // _ = group.addTaskUnlessCancelled { [unowned self] in
-                //     try Task.checkCancellation()
-                //     for await iceConnectionState in peerConnection.iceConnectionStateAsyncSequence {
-                //         guard !Task.isCancelled else { return }
-
-                //     }
-                // }
+                 // RECONNECT by WebRTC events
+                 _ = group.addTaskUnlessCancelled {
+                     try Task.checkCancellation()
+                     for await iceConnectionState in peerConnection.iceConnectionStateAsyncSequence {
+                         guard !Task.isCancelled else { return }
+                         guard config.eventsTriggeringReconnect.iceConnectionStates.contains(iceConnectionState) else {
+                             continue
+                         }
+                         reconnect(triggeredBy: .webRTC(.iceConnectionState(iceConnectionState)))
+                     }
+                 }
+                
+                // RECONNECT by Signaling events
+                _ = group.addTaskUnlessCancelled { [unowned self] in
+                    try Task.checkCancellation()
+                    
+                    for try await sipEvent in self
+                        .signaling
+                        .receiveFromRemoteAsyncSequence()
+                        .compactMap({ $0.sipEvent })
+                    {
+                        guard !Task.isCancelled else { return }
+                        guard config.eventsTriggeringReconnect.sipEvents.contains(sipEvent) else {
+                            continue
+                        }
+                        reconnect(triggeredBy: .sessionInitiationProtocolEvent(sipEvent))
+                    }
+                }
 
                 // NEGOTIATION
                 _ = group.addTaskUnlessCancelled { [unowned self] in
@@ -104,16 +133,17 @@ public extension RTCClient {
                     for await ice in peerConnection.generatedICECandidateAsyncSequence {
                         guard !Task.isCancelled else { return }
                         debugPrint("❄️ Generated new ICE candidate, sending to remote...")
-                        try await self.signaling.sendToRemote(.addICE(ice))
+                        try await self.signaling.sendToRemote(rtcPrimitive: .addICE(ice))
                         debugPrint("❄️ Sent newly generated ICE candidate to remote")
                     }
                 }
+                
                 _ = group.addTaskUnlessCancelled { [unowned self] in
                     // remote ICE to local
                     try Task.checkCancellation()
                     for try await ice in self.signaling
                         .receiveFromRemoteAsyncSequence()
-                        .compactMap({ $0.addICE })
+                        .compactMap({ $0.rtcPrimitive?.addICE })
                         .prefix(1)
                     {
                         debugPrint("❄️ Received ICE from remote")
@@ -129,7 +159,7 @@ public extension RTCClient {
                     try Task.checkCancellation()
                     for await ices in peerConnection.removeICECandidatesAsyncSequence {
                         guard !Task.isCancelled else { return }
-                        try await self.signaling.sendToRemote(.removeICEs(ices))
+                        try await self.signaling.sendToRemote(rtcPrimitive: .removeICEs(ices))
                     }
                 }
 
@@ -138,7 +168,7 @@ public extension RTCClient {
                     try Task.checkCancellation()
                     for try await icesToRemove in self.signaling
                         .receiveFromRemoteAsyncSequence()
-                        .compactMap({ $0.removeICEs })
+                        .compactMap({ $0.rtcPrimitive?.removeICEs })
                         .prefix(1)
                     {
                         debugPrint("❄️ Received ICEs to remove from remote")
@@ -193,14 +223,14 @@ private extension RTCClient {
 
         // Send `Offer` to remote
         debugPrint("☑️ Sending `Offer` to remote...")
-        try await signaling.sendToRemote(.offer(offer))
+        try await signaling.sendToRemote(rtcPrimitive: .offer(offer))
         debugPrint("✅ Sent `Offer` to remote.")
 
         // Receive `Answer` from remote
         debugPrint("☑️ Waiting for `Answer` from remote...")
         for try await answer in signaling
             .receiveFromRemoteAsyncSequence()
-            .compactMap({ $0.answer })
+            .compactMap({ $0.rtcPrimitive?.answer })
             .prefix(1)
         {
             debugPrint("✅ Got `Answer` from remote.")
@@ -220,7 +250,7 @@ private extension RTCClient {
         debugPrint("☑️ Waiting for `Offer` from remote...")
         for try await offer in signaling
             .receiveFromRemoteAsyncSequence()
-            .compactMap({ $0.offer })
+            .compactMap({ $0.rtcPrimitive?.offer })
             .prefix(1)
         {
             debugPrint("✅ Got `Offer` from remote.")
@@ -237,7 +267,7 @@ private extension RTCClient {
 
         // Send `Answer` to remote
         debugPrint("☑️ Sending `Answer` to remote...")
-        try await signaling.sendToRemote(.answer(answer))
+        try await signaling.sendToRemote(rtcPrimitive: .answer(answer))
         debugPrint("✅ Sent `Answer` to remote.")
         // done
         debugPrint("👭 Negotiation finished 🥈✅.")

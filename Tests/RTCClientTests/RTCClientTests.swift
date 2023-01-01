@@ -20,7 +20,7 @@ final class RTCClientTests: XCTestCase {
         let initiatorReceivedMsgExp = expectation(description: "Initiator received msg")
         let answererReceivedMsgExp = expectation(description: "Answerer received msg")
         
-        let (initiatorSignaling, answererSignaling) = SignalingClient.passthrough()
+        let (initiatorSignaling, answererSignaling) = SignalingClient<RTCPrimitive>.passthrough()
         
         let initiator = RTCClient(
             signaling: initiatorSignaling
@@ -94,7 +94,7 @@ final class RTCClientTests: XCTestCase {
     }
 }
 
-extension SignalingClient {
+extension SignalingClient where SignalingServerMessage == RTCPrimitive {
 
     static func passthrough() -> (caller: Self, answerer: Self) {
         let (toCallerAsyncStream, fromCallerAsyncContinuation) = AsyncStream.streamWithContinuation(Data.self)
@@ -102,5 +102,20 @@ extension SignalingClient {
         let caller = Self.passthrough(stream: toCallerAsyncStream, continuation: fromAnswererAsyncContinuation)
         let answerer = Self.passthrough(stream: toAnswererAsyncStream, continuation: fromCallerAsyncContinuation)
         return (caller, answerer)
+    }
+}
+
+extension RTCPrimitive: RTCPrimitiveEventProtocol {
+    public var rtcPrimitive: RTCPrimitive? { self }
+    public init(rtcPrimitive: RTCPrimitive) {
+        self = rtcPrimitive
+    }
+}
+extension RTCPrimitive: SIPEventProtocol {
+    public var sipEvent: SessionInitiationProtocolEvent? {
+        return nil
+    }
+    public init(sipEvent: SessionInitiationProtocolEvent) {
+        fatalError("Not used in this test")
     }
 }

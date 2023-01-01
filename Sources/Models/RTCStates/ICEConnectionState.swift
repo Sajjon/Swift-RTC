@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum ICEConnectionState: String, Sendable, Hashable, CustomStringConvertible {
+public enum ICEConnectionState: String, Sendable, Hashable, Codable, CustomStringConvertible {
     case new
     case checking
     case connected

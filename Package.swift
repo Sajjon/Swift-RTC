@@ -8,7 +8,11 @@ let develop = true
 let targets: [Target] = [
     .target(
         name: "RTCModels",
-        dependencies: ["AsyncExtensions"],
+        dependencies: [
+            "AsyncExtensions",
+            .product(name: "Tagged", package: "swift-tagged"),
+            .product(name: "Collections", package: "swift-collections"),
+        ],
         path: "Sources/Models"
     ),
     .target(
@@ -80,7 +84,9 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/stasel/WebRTC", from: "108.0.0"),
-        .package(url: "https://github.com/sideeffect-io/AsyncExtensions", from: "0.5.1")
+        .package(url: "https://github.com/sideeffect-io/AsyncExtensions", from: "0.5.1"),
+        .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
+        .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.9.0"),
     ],
     targets: targets
 )

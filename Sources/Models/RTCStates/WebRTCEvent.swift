@@ -7,14 +7,14 @@
 
 import Foundation
 
-public enum RTCEvent: Sendable, Hashable, CustomStringConvertible {
+public enum WebRTCEvent: Sendable, Hashable, Codable, CustomStringConvertible {
     case iceConnectionState(ICEConnectionState)
     case iceGatheringState(ICEGatheringState)
     case signalingState(SignalingState)
     case peerConnectionState(PeerConnectionState)
 }
 
-public extension RTCEvent {
+public extension WebRTCEvent {
     var description: String {
         switch self {
         case let .iceConnectionState(event): return ".iceConnectionState(\(event))"
@@ -22,5 +22,14 @@ public extension RTCEvent {
         case let .signalingState(event): return ".signalingState(\(event))"
         case let .peerConnectionState(event): return ".peerConnectionState(\(event))"
         }
+    }
+}
+
+public extension WebRTCEvent {
+    var iceConnectionState: ICEConnectionState? {
+        guard case .iceConnectionState(let iceConnectionState) = self else {
+            return nil
+        }
+        return iceConnectionState
     }
 }

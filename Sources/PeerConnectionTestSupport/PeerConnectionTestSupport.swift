@@ -24,12 +24,12 @@ public extension Tunnel.Decoder where Tunnel.In == Data, Tunnel.Out == Data {
     }
 }
 
-public extension SignalingClient.Packer where T == RTCPrimitive {
-    static let passthrough = Self(pack: { $0 })
+public extension SignalingClient.Packer where T == SignalingServerMessage {
+    static var passthrough: Self { .init(pack: { $0 }) }
 }
 
-public extension SignalingClient.Unpacker where T == RTCPrimitive {
-    static let passthrough = Self(unpack: { $0 })
+public extension SignalingClient.Unpacker where T == SignalingServerMessage {
+    static var passthrough: Self { .init(unpack: { $0 }) }
 }
 
 public extension SignalingClient.Transport where ID == Never, IncomingMessage == OutgoingMessage {
