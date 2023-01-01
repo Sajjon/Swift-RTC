@@ -10,6 +10,7 @@ import Foundation
 public struct WebRTCConfig: Sendable, Hashable, Codable {
     public let iceServers: [ICEServer]
     public let defineDtlsSrtpKeyAgreement: Bool
+//    public let eventsTriggeringReconnect: []
     
     public init(
         defineDtlsSrtpKeyAgreement: Bool = true,

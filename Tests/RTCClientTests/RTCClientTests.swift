@@ -15,7 +15,6 @@ import XCTest
 
 final class RTCClientTests: XCTestCase {
     
-    
     func test_session() async throws {
 
         let initiatorReceivedMsgExp = expectation(description: "Initiator received msg")

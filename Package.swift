@@ -15,14 +15,24 @@ let targets: [Target] = [
         name: "RTCPeerConnection",
         dependencies: [
             "RTCModels",
-            "WebRTC"
+            "WebRTC",
         ],
         path: "Sources/PeerConnection"
+    ),
+    .target(
+        name: "RTCPeerConnectionTestSupport",
+        dependencies: [
+            "RTCPeerConnection",
+            "RTCSignaling",
+            "RTCModels",
+        ],
+        path: "Sources/PeerConnectionTestSupport"
     ),
     .testTarget(
         name: "PeerConnectionTests",
         dependencies: [
-            "RTCPeerConnection"
+            "RTCPeerConnection",
+            "RTCPeerConnectionTestSupport",
         ]
     ),
     .target(
@@ -37,7 +47,7 @@ let targets: [Target] = [
         name: "RTCClient",
         dependencies: [
             "RTCSignaling",
-            "RTCPeerConnection",
+            "RTCPeerConnectionTestSupport",
         ],
         path: "Sources/Client"
     ),

@@ -17,6 +17,9 @@ internal final class PeerConnectionDelegate:
     internal let shouldNegotiateAsyncSequence: AsyncStream<NegotiationRole>
     private let shouldNegotiateAsyncContinuation: AsyncStream<NegotiationRole>.Continuation
     
+    internal let iceConnectionStateAsyncSequence: AsyncStream<ICEConnectionState>
+    private let iceConnectionStateAsyncContinuation: AsyncStream<ICEConnectionState>.Continuation
+    
     internal let signalingStateAsyncSequence: AsyncStream<SignalingState>
     private let signalingStateAsyncContinuation: AsyncStream<SignalingState>.Continuation
     
@@ -25,7 +28,6 @@ internal final class PeerConnectionDelegate:
     
     internal let removeICECandidatesAsyncSequence: AsyncStream<[ICECandidate]>
     private let removeICECandidatesAsyncContinutation: AsyncStream<[ICECandidate]>.Continuation
-    
 
     private let negotiationRole: NegotiationRole
     private let id: PeerConnectionID
@@ -35,12 +37,10 @@ internal final class PeerConnectionDelegate:
         self.negotiationRole = negotiationRole
         
         (shouldNegotiateAsyncSequence, shouldNegotiateAsyncContinuation) = AsyncStream.streamWithContinuation(NegotiationRole.self)
+        (iceConnectionStateAsyncSequence, iceConnectionStateAsyncContinuation) = AsyncStream.streamWithContinuation(ICEConnectionState.self)
         (signalingStateAsyncSequence, signalingStateAsyncContinuation) = AsyncStream.streamWithContinuation(SignalingState.self)
-        
         (generatedICECandidateAsyncSequence, generatedICECandidateAsyncContinutation) = AsyncStream.streamWithContinuation(ICECandidate.self)
-        
         (removeICECandidatesAsyncSequence, removeICECandidatesAsyncContinutation) = AsyncStream.streamWithContinuation([ICECandidate].self)
-
         
         super.init()
     }
@@ -51,7 +51,7 @@ internal final class PeerConnectionDelegate:
 internal extension PeerConnectionDelegate {
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
-        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id), didOpen dataChannel:\(dataChannel.channelId)")
+        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id) IGNORED ⚠️ EVENT - didOpen dataChannel:\(dataChannel.channelId)")
     }
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
@@ -68,19 +68,20 @@ internal extension PeerConnectionDelegate {
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
         let state = newState.swiftify()
         debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id), didChange IceConnectionState to: \(state)")
+        iceConnectionStateAsyncContinuation.yield(state)
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
-        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id), didRemove stream: \(stream.streamId)")
+        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id) IGNORED ⚠️ EVENT - didRemove stream: \(stream.streamId)")
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
-        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id), didAdd stream: \(stream.streamId)")
+        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id) IGNORED ⚠️ EVENT - didAdd stream: \(stream.streamId)")
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
         let state = newState.swiftify()
-        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id), didChange IceGatheringState to: \(state)")
+        debugPrint("\(peerConnection.hashValue % 100) peerConnection id: \(id) IGNORED ⚠️ EVENT - didChange IceGatheringState to: \(state)")
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {

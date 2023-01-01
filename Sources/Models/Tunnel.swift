@@ -3,14 +3,12 @@ import AsyncExtensions
 
 extension AsyncStream.Iterator: @unchecked Sendable where AsyncStream.Iterator.Element: Sendable {}
 
-public struct Tunnel<ID, ReadyState, IncomingMessage, OutgoingMessage>: Disconnecting
-where
-ID: Sendable & Hashable,
-ReadyState: Sendable & Equatable,
-IncomingMessage: Sendable & Equatable,
-OutgoingMessage: Sendable & Equatable
+public struct Tunnel<ID, ReadyState, IncomingMessage, OutgoingMessage>: Disconnecting where
+    ID: Sendable & Hashable,
+    ReadyState: Sendable & Equatable,
+    IncomingMessage: Sendable & Equatable,
+    OutgoingMessage: Sendable & Equatable
 {
-   
     
     public var getID: GetID
     public var readyStateUpdates: ReadyStateUpdates
@@ -34,16 +32,7 @@ OutgoingMessage: Sendable & Equatable
 }
 
 public extension Tunnel {
-    func disconnect() async {
-        await close()
-    }
-    var id: ID { getID() }
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.id == rhs.id
-    }
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
+
     typealias GetID = @Sendable () -> ID
     typealias ReadyStateUpdates = @Sendable () async throws -> AnyAsyncSequence<ReadyState>
     typealias IncomingMessages = @Sendable () async throws -> AnyAsyncSequence<IncomingMessage>
@@ -54,17 +43,33 @@ public extension Tunnel {
     typealias Out = OutgoingMessage
 }
 
-public extension Tunnel.Encoder where Tunnel.In == Data, Tunnel.Out == Data {
-    static var passthrough: Self {
-        Self(encode: { $0 })
-    }
-}
-public extension Tunnel.Decoder where Tunnel.In == Data, Tunnel.Out == Data {
-    static var passthrough: Self {
-        Self(decode: { $0 })
+// MARK: Equatable
+public extension Tunnel {
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.id == rhs.id
     }
 }
 
+// MARK: Hashable
+public extension Tunnel {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+// MARK: Identifiable
+public extension Tunnel {
+    var id: ID { getID() }
+}
+
+// MARK: Disconnecting
+public extension Tunnel {
+    func disconnect() async {
+        await close()
+    }
+}
+
+// MARK: Encoder
 public extension Tunnel {
     struct Encoder: Sendable {
         public typealias Encode = @Sendable (OutgoingMessage) async throws -> Data
@@ -73,6 +78,10 @@ public extension Tunnel {
             self.encode = encode
         }
     }
+}
+
+// MARK: Decoder
+public extension Tunnel {
     struct Decoder: Sendable {
         public typealias Decode = @Sendable (Data) async throws -> IncomingMessage
         public var decode: Decode

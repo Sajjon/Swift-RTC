@@ -76,15 +76,23 @@ public extension PeerConnection {
 
 // MARK: Async Sequences
 public extension PeerConnection {
+    
     nonisolated var shouldNegotiateAsyncSequence: AsyncStream<NegotiationRole> {
         delegate.shouldNegotiateAsyncSequence
     }
+    
+    nonisolated var iceConnectionStateAsyncSequence: AsyncStream<ICEConnectionState> {
+        delegate.iceConnectionStateAsyncSequence
+    }
+    
     nonisolated var signalingStateAsyncSequence: AsyncStream<SignalingState> {
         delegate.signalingStateAsyncSequence
     }
+    
     nonisolated var generatedICECandidateAsyncSequence: AsyncStream<ICECandidate> {
         delegate.generatedICECandidateAsyncSequence
     }
+    
     nonisolated var removeICECandidatesAsyncSequence: AsyncStream<[ICECandidate]> {
         delegate.removeICECandidatesAsyncSequence
     }

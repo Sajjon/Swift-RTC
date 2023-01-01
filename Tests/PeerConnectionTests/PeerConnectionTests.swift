@@ -1,4 +1,5 @@
 import XCTest
+import RTCPeerConnectionTestSupport
 @testable import RTCPeerConnection
 import RTCModels
 
