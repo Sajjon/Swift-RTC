@@ -130,7 +130,7 @@ public extension PeerConnection {
         
         dataChannel.delegate = dataChannelDelegate
         
-        let channel = Tunnel.live(
+        let channel = Tunnel.multicast(
             dataChannel: dataChannel,
             dataChannelDelegate: dataChannelDelegate
         )

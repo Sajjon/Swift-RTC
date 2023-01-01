@@ -56,14 +56,14 @@ public extension SignalingClient.Transport where ID == Never, IncomingMessage ==
 
     typealias InOutMessage = IncomingMessage
 
-    static func passthrough(
+    static func multicastPassthrough(
         stream incomingMessagesAsyncStream: AsyncStream<InOutMessage>,
         continuation: AsyncStream<InOutMessage>.Continuation
     ) -> Self {
-        return Self.live(
+        return Self.multicast(
             getID: fatalError("No ID"),
-            readyStateAsyncStream: AsyncStream(unfolding: { fatalError("No ready state") }),
-            incomingMessagesAsyncStream: incomingMessagesAsyncStream,
+            readyStateAsyncSequence: AsyncStream(unfolding: { fatalError("No ready state") }),
+            incomingMessagesAsyncSequence: incomingMessagesAsyncStream,
             send: {
                 continuation.yield($0)
             }, close: {
@@ -79,7 +79,7 @@ public extension SignalingClient {
         Self.with(
             packer: .json,
             unpacker: .json,
-            transport: .passthrough(stream: stream, continuation: continuation)
+            transport: .multicastPassthrough(stream: stream, continuation: continuation)
         )
     }
 }

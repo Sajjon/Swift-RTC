@@ -45,10 +45,8 @@ public extension Tunnel {
         hasher.combine(id)
     }
     typealias GetID = @Sendable () -> ID
-    typealias ReadyStateUpdates = @Sendable () async throws ->
-    AnyAsyncSequence<ReadyState>
-    typealias IncomingMessages = @Sendable () async throws ->
-    AnyAsyncSequence<IncomingMessage>
+    typealias ReadyStateUpdates = @Sendable () async throws -> AnyAsyncSequence<ReadyState>
+    typealias IncomingMessages = @Sendable () async throws -> AnyAsyncSequence<IncomingMessage>
     typealias Send = @Sendable (OutgoingMessage) async throws -> Void
     typealias Close = @Sendable () async -> Void
     
@@ -87,27 +85,34 @@ public extension Tunnel {
 
 public extension Tunnel {
     
-    static func live(
+    static func multicast<ReadyStateAsync, IncomingMessagesAsync>(
         getID: @escaping @autoclosure @Sendable () -> ID,
-        readyStateAsyncStream: AsyncStream<ReadyState>,
-        incomingMessagesAsyncStream: AsyncStream<IncomingMessage>,
+        readyStateAsyncSequence: @escaping @Sendable () async throws -> ReadyStateAsync,
+        incomingMessagesAsyncSequence: @escaping @Sendable () async throws -> IncomingMessagesAsync,
         send: @escaping Send,
         close: @escaping Close
-    ) -> Self {
-        
+    ) -> Self where
+        ReadyStateAsync: AsyncSequence & Sendable,
+        ReadyStateAsync.AsyncIterator: Sendable,
+        ReadyStateAsync.Element == ReadyState,
+        IncomingMessagesAsync: AsyncSequence & Sendable,
+        IncomingMessagesAsync.AsyncIterator: Sendable,
+        IncomingMessagesAsync.Element == IncomingMessage
+    {
         let reaadyStateMulticastSubject = AsyncThrowingPassthroughSubject<ReadyState, Error>()
+        
         let incomingMulticastSubject = AsyncThrowingPassthroughSubject<IncomingMessage, Error>()
         
         return Self(
             getID: getID,
             readyStateUpdates: {
-                readyStateAsyncStream
+                try await readyStateAsyncSequence()
                 .multicast(reaadyStateMulticastSubject)
                 .autoconnect()
                 .eraseToAnyAsyncSequence()
             },
             incomingMessages: {
-                incomingMessagesAsyncStream
+                try await incomingMessagesAsyncSequence()
                 .multicast(incomingMulticastSubject)
                 .autoconnect()
                 .eraseToAnyAsyncSequence()
@@ -117,23 +122,49 @@ public extension Tunnel {
         )
     }
     
-    static func live(
+    static func multicast<ReadyStateAsync, IncomingMessagesAsync>(
+        getID: @escaping @autoclosure @Sendable () -> ID,
+        readyStateAsyncSequence: ReadyStateAsync,
+        incomingMessagesAsyncSequence: IncomingMessagesAsync,
+        send: @escaping Send,
+        close: @escaping Close
+    ) -> Self where
+        ReadyStateAsync: AsyncSequence & Sendable,
+        ReadyStateAsync.AsyncIterator: Sendable,
+        ReadyStateAsync.Element == ReadyState,
+        IncomingMessagesAsync: AsyncSequence & Sendable,
+        IncomingMessagesAsync.AsyncIterator: Sendable,
+        IncomingMessagesAsync.Element == IncomingMessage
+    {
+        Self.multicast(
+            getID: getID(),
+            readyStateAsyncSequence: {
+                readyStateAsyncSequence
+            },
+            incomingMessagesAsyncSequence: {
+                incomingMessagesAsyncSequence
+            },
+            send: send,
+            close: close
+        )
+    }
+    
+    static func multicast(
         getID: @escaping @autoclosure @Sendable () -> ID,
         unfoldingReadyState: @escaping @Sendable () async -> ReadyState?,
         unfoldingIncomingMessage: @escaping @Sendable () async -> IncomingMessage?,
-        send:  @escaping Send,
-        close:  @escaping Close
+        send: @escaping Send,
+        close: @escaping Close
     ) -> Self {
         
-        Self.live(
+        Self.multicast(
             getID: getID(),
-            readyStateAsyncStream: AsyncStream(
-                    unfolding: unfoldingReadyState
-                ),
-            incomingMessagesAsyncStream:
-                AsyncStream(
-                    unfolding: unfoldingIncomingMessage
-                ),
+            readyStateAsyncSequence: AsyncStream(
+                unfolding: unfoldingReadyState
+            ),
+            incomingMessagesAsyncSequence: AsyncStream(
+                unfolding: unfoldingIncomingMessage
+            ),
             send: send,
             close: close
         )
