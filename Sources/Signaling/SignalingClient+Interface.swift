@@ -19,7 +19,9 @@ public protocol SIPEventProtocol {
     init(sipEvent: SessionInitiationProtocolEvent)
 }
 
-public struct SignalingClient<SignalingServerMessage>: Sendable where SignalingServerMessage: Sendable & RTCPrimitiveEventProtocol & SIPEventProtocol & Equatable & Codable {
+public struct SignalingClient<SignalingServerMessage>: Sendable where
+SignalingServerMessage: Sendable & RTCPrimitiveEventProtocol & SIPEventProtocol & Equatable & Codable
+{
     public var sendToRemote: SendToRemote
     public var receiveFromRemoteAsyncSequence: ReceiveFromRemoteAsyncSequence
     public init(

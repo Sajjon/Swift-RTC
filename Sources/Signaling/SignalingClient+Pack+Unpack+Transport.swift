@@ -46,17 +46,17 @@ public extension SignalingClient.Packer where T == Data {
 
 // MARK: Transport
 public extension SignalingClient {
-    typealias Transport<ID: Sendable & Hashable, InOutMessage: Sendable & Equatable> = Tunnel<ID, Never, InOutMessage, InOutMessage>
+    typealias Transport<ID: Sendable & Hashable> = Tunnel<ID, WebSocketState, Data, Data>
 }
 
 public extension SignalingClient {
     
-    static func with<ID, Message>(
-        packer: Packer<Message>,// = .json,
-        unpacker: Unpacker<Message>,// = .json,
-        transport: Transport<ID, Message>
+    static func with<ID>(
+        packer: Packer<Data> = .json,
+        unpacker: Unpacker<Data> = .json,
+        transport: Transport<ID>
     ) -> Self
-    where ID: Sendable & Hashable, Message: Sendable & Hashable
+    where ID: Sendable & Hashable
     {
         let multicastSubject = AsyncThrowingPassthroughSubject<SignalingServerMessage, Error>()
         let (stream, continuation) = AsyncStream.streamWithContinuation(SignalingServerMessage.self)
