@@ -7,7 +7,7 @@
 
 import Foundation
 import WebRTC
-import RTCModels
+import P2PModels
 
 extension ICECandidate {
     func rtc() -> RTCIceCandidate {

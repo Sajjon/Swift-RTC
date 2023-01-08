@@ -7,58 +7,107 @@ let develop = true
 
 let targets: [Target] = [
     .target(
-        name: "RTCModels",
+        name: "P2PModels",
         dependencies: [
             "AsyncExtensions",
+            .product(name: "Bite", package: "Bite"),
             .product(name: "Tagged", package: "swift-tagged"),
             .product(name: "Collections", package: "swift-collections"),
+            .product(name: "SwiftLogConsoleColors", package: "swift-log-console-colors"),
         ],
         path: "Sources/Models"
     ),
     .target(
-        name: "RTCPeerConnection",
+        name: "P2PPeerConnection",
         dependencies: [
-            "RTCModels",
+            "P2PModels",
             "WebRTC",
+            "Tunnel",
         ],
         path: "Sources/PeerConnection"
-    ),
-    .target(
-        name: "RTCPeerConnectionTestSupport",
-        dependencies: [
-            "RTCPeerConnection",
-            "RTCSignaling",
-            "RTCModels",
-        ],
-        path: "Sources/PeerConnectionTestSupport"
     ),
     .testTarget(
         name: "PeerConnectionTests",
         dependencies: [
-            "RTCPeerConnection",
-            "RTCPeerConnectionTestSupport",
+            "P2PPeerConnection",
+            "SignalingServerRadixTestSupport",
         ]
     ),
     .target(
-        name: "RTCSignaling",
+        name: "SignalingServerClient",
         dependencies: [
             "AsyncExtensions",
-            "RTCModels",
+            "P2PModels",
         ],
-        path: "Sources/Signaling"
+        path: "Sources/Signaling/SignalingServerClient"
     ),
     .target(
-        name: "RTCClient",
+        name: "Tunnel",
         dependencies: [
-            "RTCSignaling",
-            "RTCPeerConnectionTestSupport",
+            "P2PModels",
+            "AsyncExtensions",
+        ]
+    ),
+    .target(
+        name: "WebSocket",
+        dependencies: [
+            "SignalingServerClient",
+        ],
+        path: "Sources/Signaling/WebSocket"
+    ),
+     .target(
+        name: "MessageAssembler",
+        dependencies: [
+            "P2PModels",
+        ],
+        path: "Sources/Signaling/MessageAssembler"
+    ),
+          .target(
+        name: "MessageSplitter",
+        dependencies: [
+            "P2PModels",
+            .product(name: "Algorithms", package: "swift-algorithms"),
+        ],
+        path: "Sources/Signaling/MessageSplitter"
+    ),
+    .target(
+        name: "SignalingServerRadix",
+        dependencies: [
+            "MessageAssembler",
+            "MessageSplitter",
+            "WebSocket",
+            "Tunnel",
+        ],
+        path: "Sources/Signaling/SignalingServerRadix"
+    ),
+      .target(
+        name: "SignalingServerRadixTestSupport",
+        dependencies: [
+            "SignalingServerRadix",
+        ],
+        path: "Sources/Signaling/SignalingServerRadixTestSupport"
+    ),
+    .testTarget(
+        name: "AssembleSplitMessageTests",
+        dependencies: [
+            "MessageSplitter",
+            "MessageAssembler",
+        ]
+    ),
+    .target(
+        name: "P2PClient",
+        dependencies: [
+            "P2PPeerConnection",
+            "SignalingServerClient",
+            "Tunnel",
         ],
         path: "Sources/Client"
     ),
     .testTarget(
-        name: "RTCClientTests",
+        name: "P2PClientTests",
         dependencies: [
-            "RTCClient",
+            "P2PClient",
+            "SignalingServerRadixTestSupport"
         ]
     )
 ]
@@ -77,16 +126,23 @@ if develop {
 }
 
 let package = Package(
-    name: "swift-rtc",
+    name: "Converse",
     platforms: [.macOS(.v12), .iOS(.v15)],
     products: [
-        .library(name: "RTCClient", targets: ["RTCClient"])
+        .library(name: "P2PClient", targets: ["P2PClient"])
     ],
     dependencies: [
         .package(url: "https://github.com/stasel/WebRTC", from: "108.0.0"),
-        .package(url: "https://github.com/sideeffect-io/AsyncExtensions", from: "0.5.1"),
+        
+        // RDX Works
+        // We use SSH because repos are private...
+        .package(url: "git@github.com:radixdlt/Bite.git", from: "0.0.4"),
+        
+        .package(url: "https://github.com/sideeffect-io/AsyncExtensions", from: "0.5.2"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
+        .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),
         .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.9.0"),
+        .package(url: "https://github.com/nneuberger1/swift-log-console-colors", from: "1.0.3"),
     ],
     targets: targets
 )

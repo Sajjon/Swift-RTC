@@ -7,7 +7,7 @@
 
 import Foundation
 import WebRTC
-import RTCModels
+import P2PModels
 
 extension WebRTCConfig {
     func rtc() -> RTCConfiguration {

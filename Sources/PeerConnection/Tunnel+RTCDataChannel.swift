@@ -8,10 +8,9 @@
 import AsyncExtensions
 import Foundation
 import WebRTC
-import RTCModels
+import P2PModels
+import Tunnel
 
-extension AnyAsyncIterator: @unchecked Sendable where Self.Element: Sendable {}
-extension AnyAsyncSequence: @unchecked Sendable where Self.AsyncIterator: Sendable {}
 
 enum Error: String, LocalizedError, Sendable {
     case channelIsNotOpen
@@ -26,9 +25,9 @@ public extension Tunnel where ID == DataChannelID, ReadyState == DataChannelStat
 
         Self.multicast(
             getID: tunnel.id,
-            readyStateAsyncSequence: { try await tunnel.readyStateUpdates() },
+            readyStateAsyncSequence: { await tunnel.readyStateUpdates() },
             incomingMessagesAsyncSequence: {
-                 try await tunnel.incomingMessages().map { data in
+                 await tunnel.incomingMessages().map { data in
                     try await decoder.decode(data)
                 }.eraseToAnyAsyncSequence()
             },

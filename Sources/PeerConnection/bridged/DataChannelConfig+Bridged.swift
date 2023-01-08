@@ -7,7 +7,7 @@
 
 import Foundation
 import WebRTC
-import RTCModels
+import P2PModels
 
 extension DataChannelConfig {
     func rtc(dataChannelID: DataChannelID) -> RTCDataChannelConfiguration {

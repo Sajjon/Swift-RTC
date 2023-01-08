@@ -7,7 +7,8 @@
 
 import Foundation
 import WebRTC
-import RTCModels
+import P2PModels
+import Tunnel
 
 public actor PeerConnection: Disconnecting {
     nonisolated public let id: ID

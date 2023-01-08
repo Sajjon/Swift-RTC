@@ -9,7 +9,7 @@ import Foundation
 
 /// `SIP` (Session Initiation Protocol) Event
 public enum SessionInitiationProtocolEvent: String, Sendable, Hashable, Codable, CustomStringConvertible {
-    case remotePeerIsAlreadyConnected
-    case remotePeerJustConnected
-    case remotePeerDisconnected
+    case remoteClientIsAlreadyConnected
+    case remoteClientJustConnected
+    case remoteClientDisconnected
 }

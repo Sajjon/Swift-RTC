@@ -7,7 +7,7 @@
 
 import Foundation
 import WebRTC
-import RTCModels
+import P2PModels
 
 internal final class DataChannelDelegate: NSObject, RTCDataChannelDelegate, Sendable {
     

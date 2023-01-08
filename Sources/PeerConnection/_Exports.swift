@@ -6,4 +6,4 @@
 //
 
 @_exported import Foundation
-@_exported import RTCModels
+@_exported import P2PModels

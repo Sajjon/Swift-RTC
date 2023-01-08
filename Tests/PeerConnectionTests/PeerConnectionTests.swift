@@ -1,7 +1,6 @@
 import XCTest
-import RTCPeerConnectionTestSupport
-@testable import RTCPeerConnection
-import RTCModels
+@testable import P2PPeerConnection
+import P2PModels
 
 final class RTCPeerConnectionTests: XCTestCase {
 

@@ -5,16 +5,17 @@
 //  Created by Alexander Cyon on 2022-12-28.
 //
 
-import RTCPeerConnection
-import RTCSignaling
+import P2PPeerConnection
+import SignalingServerClient
+import Tunnel
 
-public actor RTCClient<SignalingServerMessage> where SignalingServerMessage: Sendable & RTCPrimitiveEventProtocol & SIPEventProtocol & Equatable & Codable {
+public actor RTCClient {
     typealias Connections = Disposables<PeerConnection>
-    private let signaling: SignalingClient<SignalingServerMessage>
+    private let signaling: SignalingClient
     private let connections: Connections = .init()
 
     public init(
-        signaling: SignalingClient<SignalingServerMessage>
+        signaling: SignalingClient
     ) {
         self.signaling = signaling
     }
@@ -102,17 +103,14 @@ public extension RTCClient {
                 // RECONNECT by Signaling events
                 _ = group.addTaskUnlessCancelled { [unowned self] in
                     try Task.checkCancellation()
-                    
-                    for try await sipEvent in self
-                        .signaling
-                        .receiveFromRemoteAsyncSequence()
-                        .compactMap({ $0.sipEvent })
-                    {
-                        guard !Task.isCancelled else { return }
-                        guard config.eventsTriggeringReconnect.sipEvents.contains(sipEvent) else {
-                            continue
+                    if let sipEvents = try await self.signaling.sessionInitiationProtocolEventsAsyncSequence?() {
+                        for try await sipEvent in sipEvents {
+                            guard !Task.isCancelled else { return }
+                            guard config.eventsTriggeringReconnect.sipEvents.contains(sipEvent) else {
+                                continue
+                            }
+                            reconnect(triggeredBy: .sessionInitiationProtocolEvent(sipEvent))
                         }
-                        reconnect(triggeredBy: .sessionInitiationProtocolEvent(sipEvent))
                     }
                 }
 
@@ -133,7 +131,7 @@ public extension RTCClient {
                     for await ice in peerConnection.generatedICECandidateAsyncSequence {
                         guard !Task.isCancelled else { return }
                         debugPrint("❄️ Generated new ICE candidate, sending to remote...")
-                        try await self.signaling.sendToRemote(rtcPrimitive: .addICE(ice))
+                        try await self.signaling.sendRTCPrimitiveToRemote(.addICE(ice))
                         debugPrint("❄️ Sent newly generated ICE candidate to remote")
                     }
                 }
@@ -141,9 +139,9 @@ public extension RTCClient {
                 _ = group.addTaskUnlessCancelled { [unowned self] in
                     // remote ICE to local
                     try Task.checkCancellation()
-                    for try await ice in self.signaling
-                        .receiveFromRemoteAsyncSequence()
-                        .compactMap({ $0.rtcPrimitive?.addICE })
+                    for try await ice in try await self.signaling
+                        .rtcPrimitivesFromRemoteAsyncSequence()
+                        .compactMap({ $0.addICE })
                         .prefix(1)
                     {
                         debugPrint("❄️ Received ICE from remote")
@@ -159,16 +157,16 @@ public extension RTCClient {
                     try Task.checkCancellation()
                     for await ices in peerConnection.removeICECandidatesAsyncSequence {
                         guard !Task.isCancelled else { return }
-                        try await self.signaling.sendToRemote(rtcPrimitive: .removeICEs(ices))
+                        try await self.signaling.sendRTCPrimitiveToRemote(.removeICEs(ices))
                     }
                 }
 
                 _ = group.addTaskUnlessCancelled { [unowned self] in
                     // remote ICEs to remove locally
                     try Task.checkCancellation()
-                    for try await icesToRemove in self.signaling
-                        .receiveFromRemoteAsyncSequence()
-                        .compactMap({ $0.rtcPrimitive?.removeICEs })
+                    for try await icesToRemove in try await self.signaling
+                        .rtcPrimitivesFromRemoteAsyncSequence()
+                        .compactMap({ $0.removeICEs })
                         .prefix(1)
                     {
                         debugPrint("❄️ Received ICEs to remove from remote")
@@ -223,14 +221,14 @@ private extension RTCClient {
 
         // Send `Offer` to remote
         debugPrint("☑️ Sending `Offer` to remote...")
-        try await signaling.sendToRemote(rtcPrimitive: .offer(offer))
+        try await signaling.sendRTCPrimitiveToRemote(.offer(offer))
         debugPrint("✅ Sent `Offer` to remote.")
 
         // Receive `Answer` from remote
         debugPrint("☑️ Waiting for `Answer` from remote...")
-        for try await answer in signaling
-            .receiveFromRemoteAsyncSequence()
-            .compactMap({ $0.rtcPrimitive?.answer })
+        for try await answer in try await signaling
+            .rtcPrimitivesFromRemoteAsyncSequence()
+            .compactMap({ $0.answer })
             .prefix(1)
         {
             debugPrint("✅ Got `Answer` from remote.")
@@ -248,9 +246,9 @@ private extension RTCClient {
         debugPrint("👭 Negotiating as answerer 🥈")
         // Receive `Offer` from remote
         debugPrint("☑️ Waiting for `Offer` from remote...")
-        for try await offer in signaling
-            .receiveFromRemoteAsyncSequence()
-            .compactMap({ $0.rtcPrimitive?.offer })
+        for try await offer in try await signaling
+            .rtcPrimitivesFromRemoteAsyncSequence()
+            .compactMap({ $0.offer })
             .prefix(1)
         {
             debugPrint("✅ Got `Offer` from remote.")
@@ -267,7 +265,7 @@ private extension RTCClient {
 
         // Send `Answer` to remote
         debugPrint("☑️ Sending `Answer` to remote...")
-        try await signaling.sendToRemote(rtcPrimitive: .answer(answer))
+        try await signaling.sendRTCPrimitiveToRemote(.answer(answer))
         debugPrint("✅ Sent `Answer` to remote.")
         // done
         debugPrint("👭 Negotiation finished 🥈✅.")

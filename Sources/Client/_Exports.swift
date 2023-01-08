@@ -1,2 +1,2 @@
-@_exported import RTCPeerConnection
-@_exported import RTCSignaling
+@_exported import P2PPeerConnection
+@_exported import SignalingServerClient

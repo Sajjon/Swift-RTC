@@ -1,0 +1,605 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4832C9D92909234C00B0B4F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4832C9D82909234C00B0B4F6 /* Assets.xcassets */; };
+		E62DDFB628BF4CC00030C733 /* PrataApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62DDFB528BF4CC00030C733 /* PrataApp.swift */; };
+		E62DDFBE28BF4CC10030C733 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E62DDFBD28BF4CC10030C733 /* Preview Assets.xcassets */; };
+		E62DDFCF28BF56D50030C733 /* AppFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62DDFCE28BF56D50030C733 /* AppFeature.swift */; };
+		E62DDFD228BF5C530030C733 /* SplashFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62DDFD128BF5C530030C733 /* SplashFeature.swift */; };
+		E6568C5C28C0A9DC0001ECFB /* UserDefaultsClientKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6568C5B28C0A9DC0001ECFB /* UserDefaultsClientKey.swift */; };
+		E6B88B71294B61B5006111DF /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = E6B88B70294B61B5006111DF /* ComposableArchitecture */; };
+		E6B88B73294B61B5006111DF /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = E6B88B72294B61B5006111DF /* Dependencies */; };
+		E6B88B76294B624F006111DF /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = E6B88B75294B624F006111DF /* CodeScanner */; };
+		E6B88B83294B6270006111DF /* ConnectUsingPassword.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B78294B6270006111DF /* ConnectUsingPassword.swift */; };
+		E6B88B84294B6270006111DF /* Effect_Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B79294B6270006111DF /* Effect_Extension.swift */; };
+		E6B88B85294B6270006111DF /* ChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B7B294B6270006111DF /* ChatMessage.swift */; };
+		E6B88B86294B6270006111DF /* ChatFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B7C294B6270006111DF /* ChatFeature.swift */; };
+		E6B88B87294B6270006111DF /* LoremIpsumGenerator+Interface.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B7E294B6270006111DF /* LoremIpsumGenerator+Interface.swift */; };
+		E6B88B88294B6270006111DF /* LoremIpsumGenerator+Live.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B7F294B6270006111DF /* LoremIpsumGenerator+Live.swift */; };
+		E6B88B89294B6270006111DF /* MessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B80294B6270006111DF /* MessageView.swift */; };
+		E6B88B8A294B6270006111DF /* InputPasswordFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B88B82294B6270006111DF /* InputPasswordFeature.swift */; };
+		E6CF09CA28BFAD64004CF10B /* UserDefaultsClient+Live.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CF09C728BFAD64004CF10B /* UserDefaultsClient+Live.swift */; };
+		E6CF09CB28BFAD64004CF10B /* UserDefaultsClient+Mocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CF09C828BFAD64004CF10B /* UserDefaultsClient+Mocks.swift */; };
+		E6CF09CC28BFAD64004CF10B /* UserDefaultsClient+Interface.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CF09C928BFAD64004CF10B /* UserDefaultsClient+Interface.swift */; };
+		E6E36BC528C74C9000E41BF0 /* LoremIpsumGeneratorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6E36BC428C74C9000E41BF0 /* LoremIpsumGeneratorKey.swift */; };
+		E6F9A0F8295472A700A2692F /* P2PConnection in Frameworks */ = {isa = PBXBuildFile; productRef = E6F9A0F7295472A700A2692F /* P2PConnection */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		4832C9D82909234C00B0B4F6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E62DDFB228BF4CC00030C733 /* Prata.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Prata.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E62DDFB528BF4CC00030C733 /* PrataApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrataApp.swift; sourceTree = "<group>"; };
+		E62DDFBB28BF4CC10030C733 /* Prata.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Prata.entitlements; sourceTree = "<group>"; };
+		E62DDFBD28BF4CC10030C733 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		E62DDFC428BF4D6E0030C733 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E62DDFCE28BF56D50030C733 /* AppFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFeature.swift; sourceTree = "<group>"; };
+		E62DDFD128BF5C530030C733 /* SplashFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashFeature.swift; sourceTree = "<group>"; };
+		E6568C5B28C0A9DC0001ECFB /* UserDefaultsClientKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsClientKey.swift; sourceTree = "<group>"; };
+		E6B88B78294B6270006111DF /* ConnectUsingPassword.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectUsingPassword.swift; sourceTree = "<group>"; };
+		E6B88B79294B6270006111DF /* Effect_Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Effect_Extension.swift; sourceTree = "<group>"; };
+		E6B88B7B294B6270006111DF /* ChatMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = "<group>"; };
+		E6B88B7C294B6270006111DF /* ChatFeature.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatFeature.swift; sourceTree = "<group>"; };
+		E6B88B7E294B6270006111DF /* LoremIpsumGenerator+Interface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "LoremIpsumGenerator+Interface.swift"; sourceTree = "<group>"; };
+		E6B88B7F294B6270006111DF /* LoremIpsumGenerator+Live.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "LoremIpsumGenerator+Live.swift"; sourceTree = "<group>"; };
+		E6B88B80294B6270006111DF /* MessageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageView.swift; sourceTree = "<group>"; };
+		E6B88B82294B6270006111DF /* InputPasswordFeature.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InputPasswordFeature.swift; sourceTree = "<group>"; };
+		E6CF09C728BFAD64004CF10B /* UserDefaultsClient+Live.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UserDefaultsClient+Live.swift"; sourceTree = "<group>"; };
+		E6CF09C828BFAD64004CF10B /* UserDefaultsClient+Mocks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UserDefaultsClient+Mocks.swift"; sourceTree = "<group>"; };
+		E6CF09C928BFAD64004CF10B /* UserDefaultsClient+Interface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UserDefaultsClient+Interface.swift"; sourceTree = "<group>"; };
+		E6E36BC428C74C9000E41BF0 /* LoremIpsumGeneratorKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoremIpsumGeneratorKey.swift; sourceTree = "<group>"; };
+		E6F9A0F62954719E00A2692F /* Converse */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Converse; path = ..; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E62DDFAF28BF4CC00030C733 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6B88B76294B624F006111DF /* CodeScanner in Frameworks */,
+				E6B88B73294B61B5006111DF /* Dependencies in Frameworks */,
+				E6B88B71294B61B5006111DF /* ComposableArchitecture in Frameworks */,
+				E6F9A0F8295472A700A2692F /* P2PConnection in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E61ECBDC294C7D42006B411C /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				E6F9A0F62954719E00A2692F /* Converse */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		E62DDFA928BF4CC00030C733 = {
+			isa = PBXGroup;
+			children = (
+				E61ECBDC294C7D42006B411C /* Packages */,
+				E62DDFB428BF4CC00030C733 /* Prata */,
+				E62DDFB328BF4CC00030C733 /* Products */,
+				E62DDFD928BF9FA50030C733 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E62DDFB328BF4CC00030C733 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E62DDFB228BF4CC00030C733 /* Prata.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E62DDFB428BF4CC00030C733 /* Prata */ = {
+			isa = PBXGroup;
+			children = (
+				4832C9D82909234C00B0B4F6 /* Assets.xcassets */,
+				E6CF09C528BFAD48004CF10B /* Environment */,
+				E62DDFCC28BF56C10030C733 /* Features */,
+				E62DDFC428BF4D6E0030C733 /* Info.plist */,
+				E62DDFB528BF4CC00030C733 /* PrataApp.swift */,
+				E62DDFBB28BF4CC10030C733 /* Prata.entitlements */,
+				E62DDFBC28BF4CC10030C733 /* Preview Content */,
+			);
+			path = Prata;
+			sourceTree = "<group>";
+		};
+		E62DDFBC28BF4CC10030C733 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				E62DDFBD28BF4CC10030C733 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		E62DDFCC28BF56C10030C733 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				E6B88B7A294B6270006111DF /* ChatFeature */,
+				E6B88B77294B6270006111DF /* ConnectUsingPasswordFeature */,
+				E6B88B81294B6270006111DF /* InputPasswordFeature */,
+				E62DDFD028BF5C4C0030C733 /* SplashFeature */,
+				E62DDFCD28BF56C60030C733 /* AppFeature */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		E62DDFCD28BF56C60030C733 /* AppFeature */ = {
+			isa = PBXGroup;
+			children = (
+				E62DDFCE28BF56D50030C733 /* AppFeature.swift */,
+			);
+			path = AppFeature;
+			sourceTree = "<group>";
+		};
+		E62DDFD028BF5C4C0030C733 /* SplashFeature */ = {
+			isa = PBXGroup;
+			children = (
+				E62DDFD128BF5C530030C733 /* SplashFeature.swift */,
+			);
+			path = SplashFeature;
+			sourceTree = "<group>";
+		};
+		E62DDFD928BF9FA50030C733 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E6568C5928C0A9C30001ECFB /* Clients */ = {
+			isa = PBXGroup;
+			children = (
+				E6CF09C628BFAD64004CF10B /* UserDefaultsClient */,
+			);
+			path = Clients;
+			sourceTree = "<group>";
+		};
+		E6568C5A28C0A9CD0001ECFB /* DependencyKeys */ = {
+			isa = PBXGroup;
+			children = (
+				E6568C5B28C0A9DC0001ECFB /* UserDefaultsClientKey.swift */,
+				E6E36BC428C74C9000E41BF0 /* LoremIpsumGeneratorKey.swift */,
+			);
+			path = DependencyKeys;
+			sourceTree = "<group>";
+		};
+		E6B88B77294B6270006111DF /* ConnectUsingPasswordFeature */ = {
+			isa = PBXGroup;
+			children = (
+				E6B88B78294B6270006111DF /* ConnectUsingPassword.swift */,
+				E6B88B79294B6270006111DF /* Effect_Extension.swift */,
+			);
+			path = ConnectUsingPasswordFeature;
+			sourceTree = "<group>";
+		};
+		E6B88B7A294B6270006111DF /* ChatFeature */ = {
+			isa = PBXGroup;
+			children = (
+				E6B88B7B294B6270006111DF /* ChatMessage.swift */,
+				E6B88B7C294B6270006111DF /* ChatFeature.swift */,
+				E6B88B7D294B6270006111DF /* LoremIpsumGenerator */,
+				E6B88B80294B6270006111DF /* MessageView.swift */,
+			);
+			path = ChatFeature;
+			sourceTree = "<group>";
+		};
+		E6B88B7D294B6270006111DF /* LoremIpsumGenerator */ = {
+			isa = PBXGroup;
+			children = (
+				E6B88B7E294B6270006111DF /* LoremIpsumGenerator+Interface.swift */,
+				E6B88B7F294B6270006111DF /* LoremIpsumGenerator+Live.swift */,
+			);
+			path = LoremIpsumGenerator;
+			sourceTree = "<group>";
+		};
+		E6B88B81294B6270006111DF /* InputPasswordFeature */ = {
+			isa = PBXGroup;
+			children = (
+				E6B88B82294B6270006111DF /* InputPasswordFeature.swift */,
+			);
+			path = InputPasswordFeature;
+			sourceTree = "<group>";
+		};
+		E6CF09C528BFAD48004CF10B /* Environment */ = {
+			isa = PBXGroup;
+			children = (
+				E6568C5A28C0A9CD0001ECFB /* DependencyKeys */,
+				E6568C5928C0A9C30001ECFB /* Clients */,
+			);
+			path = Environment;
+			sourceTree = "<group>";
+		};
+		E6CF09C628BFAD64004CF10B /* UserDefaultsClient */ = {
+			isa = PBXGroup;
+			children = (
+				E6CF09C728BFAD64004CF10B /* UserDefaultsClient+Live.swift */,
+				E6CF09C828BFAD64004CF10B /* UserDefaultsClient+Mocks.swift */,
+				E6CF09C928BFAD64004CF10B /* UserDefaultsClient+Interface.swift */,
+			);
+			path = UserDefaultsClient;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E62DDFB128BF4CC00030C733 /* Prata */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E62DDFC128BF4CC10030C733 /* Build configuration list for PBXNativeTarget "Prata" */;
+			buildPhases = (
+				E62DDFAE28BF4CC00030C733 /* Sources */,
+				E62DDFAF28BF4CC00030C733 /* Frameworks */,
+				E62DDFB028BF4CC00030C733 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E6F9A0FA295472AA00A2692F /* PBXTargetDependency */,
+			);
+			name = Prata;
+			packageProductDependencies = (
+				E6B88B70294B61B5006111DF /* ComposableArchitecture */,
+				E6B88B72294B61B5006111DF /* Dependencies */,
+				E6B88B75294B624F006111DF /* CodeScanner */,
+				E6F9A0F7295472A700A2692F /* P2PConnection */,
+			);
+			productName = Prata;
+			productReference = E62DDFB228BF4CC00030C733 /* Prata.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E62DDFAA28BF4CC00030C733 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1400;
+				LastUpgradeCheck = 1400;
+				TargetAttributes = {
+					E62DDFB128BF4CC00030C733 = {
+						CreatedOnToolsVersion = 14.0;
+					};
+				};
+			};
+			buildConfigurationList = E62DDFAD28BF4CC00030C733 /* Build configuration list for PBXProject "Prata" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E62DDFA928BF4CC00030C733;
+			packageReferences = (
+				E6B88B6F294B61B5006111DF /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+				E6B88B74294B624F006111DF /* XCRemoteSwiftPackageReference "CodeScanner" */,
+			);
+			productRefGroup = E62DDFB328BF4CC00030C733 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E62DDFB128BF4CC00030C733 /* Prata */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E62DDFB028BF4CC00030C733 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4832C9D92909234C00B0B4F6 /* Assets.xcassets in Resources */,
+				E62DDFBE28BF4CC10030C733 /* Preview Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E62DDFAE28BF4CC00030C733 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6B88B88294B6270006111DF /* LoremIpsumGenerator+Live.swift in Sources */,
+				E62DDFCF28BF56D50030C733 /* AppFeature.swift in Sources */,
+				E62DDFD228BF5C530030C733 /* SplashFeature.swift in Sources */,
+				E6E36BC528C74C9000E41BF0 /* LoremIpsumGeneratorKey.swift in Sources */,
+				E6B88B8A294B6270006111DF /* InputPasswordFeature.swift in Sources */,
+				E6B88B83294B6270006111DF /* ConnectUsingPassword.swift in Sources */,
+				E6B88B84294B6270006111DF /* Effect_Extension.swift in Sources */,
+				E6B88B85294B6270006111DF /* ChatMessage.swift in Sources */,
+				E6CF09CC28BFAD64004CF10B /* UserDefaultsClient+Interface.swift in Sources */,
+				E62DDFB628BF4CC00030C733 /* PrataApp.swift in Sources */,
+				E6B88B89294B6270006111DF /* MessageView.swift in Sources */,
+				E6B88B86294B6270006111DF /* ChatFeature.swift in Sources */,
+				E6568C5C28C0A9DC0001ECFB /* UserDefaultsClientKey.swift in Sources */,
+				E6CF09CB28BFAD64004CF10B /* UserDefaultsClient+Mocks.swift in Sources */,
+				E6B88B87294B6270006111DF /* LoremIpsumGenerator+Interface.swift in Sources */,
+				E6CF09CA28BFAD64004CF10B /* UserDefaultsClient+Live.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E6F9A0FA295472AA00A2692F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = E6F9A0F9295472AA00A2692F /* P2PConnection */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		E62DDFBF28BF4CC10030C733 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = works.rdx.prata;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E62DDFC028BF4CC10030C733 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = works.rdx.prata;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		E62DDFC228BF4CC10030C733 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Prata/Prata.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development: Alexander Cyon (42WA47MJ7G)";
+				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "Apple Development: Alexander Cyon (42WA47MJ7G)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 17;
+				DEVELOPMENT_ASSET_PATHS = "\"Prata/Preview Content\"";
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7SPGKHD4HZ;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 7SPGKHD4HZ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Prata/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR Code";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 12.5;
+				MARKETING_VERSION = 0.1.1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Prata iOS Development";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E62DDFC328BF4CC10030C733 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Prata/Prata.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 17;
+				DEVELOPMENT_ASSET_PATHS = "\"Prata/Preview Content\"";
+				DEVELOPMENT_TEAM = 7SPGKHD4HZ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Prata/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR Code";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 12.5;
+				MARKETING_VERSION = 0.1.1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E62DDFAD28BF4CC00030C733 /* Build configuration list for PBXProject "Prata" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E62DDFBF28BF4CC10030C733 /* Debug */,
+				E62DDFC028BF4CC10030C733 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E62DDFC128BF4CC10030C733 /* Build configuration list for PBXNativeTarget "Prata" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E62DDFC228BF4CC10030C733 /* Debug */,
+				E62DDFC328BF4CC10030C733 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E6B88B6F294B61B5006111DF /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.47.2;
+			};
+		};
+		E6B88B74294B624F006111DF /* XCRemoteSwiftPackageReference "CodeScanner" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Sajjon/CodeScanner.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E6B88B70294B61B5006111DF /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E6B88B6F294B61B5006111DF /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+		E6B88B72294B61B5006111DF /* Dependencies */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E6B88B6F294B61B5006111DF /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = Dependencies;
+		};
+		E6B88B75294B624F006111DF /* CodeScanner */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E6B88B74294B624F006111DF /* XCRemoteSwiftPackageReference "CodeScanner" */;
+			productName = CodeScanner;
+		};
+		E6F9A0F7295472A700A2692F /* P2PConnection */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = P2PConnection;
+		};
+		E6F9A0F9295472AA00A2692F /* P2PConnection */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = P2PConnection;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E62DDFAA28BF4CC00030C733 /* Project object */;
+}
