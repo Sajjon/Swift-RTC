@@ -89,17 +89,39 @@ public extension SignalingClient.Transport {
     static func emulatingServer<IncomingMessagesAsync>(
         incoming: IncomingMessagesAsync,
         outgoingSubject: AsyncPassthroughSubject<Data>
-    ) -> Self  where   IncomingMessagesAsync: AsyncSequence & Sendable,
-                       IncomingMessagesAsync.AsyncIterator: Sendable,
-                       IncomingMessagesAsync.Element == IncomingMessage
+    ) -> Self
+    where
+IncomingMessagesAsync: AsyncSequence & Sendable,
+IncomingMessagesAsync.AsyncIterator: Sendable,
+IncomingMessagesAsync.Element == IncomingMessage
     {
         @Sendable func transform(outgoing data: Data) throws -> Data {
             let jsonDecoder = JSONDecoder()
             let jsonEncoder = JSONEncoder()
-            let rpc = try jsonDecoder.decode(RPCMessage.self, from: data)
-            let incoming = RadixSignalMsg.Incoming.fromRemoteClientOriginally(rpc)
-            let transformed = try jsonEncoder.encode(incoming)
-            return transformed
+          
+            do {
+                // Our SignalingServer is either sending primitives packed
+                // as RPCMessage, we transform those as if they have been
+                // sent via Signaling Server, i.e:
+                // we transform `RPCMessage` -> `FromRemoteClientOriginally`
+                //
+                // or...
+                let rpc = try jsonDecoder.decode(RPCMessage.self, from: data)
+                let incoming = RadixSignalMsg.Incoming.fromRemoteClientOriginally(rpc)
+                let transformed = try jsonEncoder.encode(incoming)
+                return transformed
+            } catch {
+                // ... or we have used the same transport from a unit test to
+                // send a SessionInitialisationEvent - a.k.a. `RadixSignalMsg.Incoming`
+                // of case `fromSignalingServerItself`.
+                let fromSignaling = try jsonDecoder.decode(RadixSignalMsg.Incoming.self, from: data)
+                switch fromSignaling {
+                case .fromSignalingServerItself:
+                    return data // as is
+                default:
+                    throw error
+                }
+            }
         }
         
         return .multicastPassthrough(
