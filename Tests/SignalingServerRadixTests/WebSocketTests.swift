@@ -50,6 +50,10 @@ final class WebSocketTests: XCTestCase {
             )
         )
         
+        // Websocket actor connects immediately and to not stress test WS server
+        // too much we give it 500 ms to connect first client before connecting next.
+        try await Task.sleep(nanoseconds: UInt64(0.5 * Double(NSEC_PER_SEC)))
+        
         let websocketMobile = try SignalingClient.Transport.webSocket(
             peerConnectionID: connectionID,
             clientSource: .mobileWallet,
