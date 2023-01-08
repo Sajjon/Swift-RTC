@@ -25,9 +25,9 @@ public extension Tunnel where ID == DataChannelID, ReadyState == DataChannelStat
 
         Self.multicast(
             getID: tunnel.id,
-            readyStateAsyncSequence: { await tunnel.readyStateUpdates() },
+            readyStateAsyncSequence: { try await tunnel.readyStateUpdates() },
             incomingMessagesAsyncSequence: {
-                 await tunnel.incomingMessages().map { data in
+                 try await tunnel.incomingMessages().map { data in
                     try await decoder.decode(data)
                 }.eraseToAnyAsyncSequence()
             },

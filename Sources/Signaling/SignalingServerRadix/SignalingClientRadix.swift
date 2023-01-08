@@ -27,6 +27,7 @@ public extension SignalingClient {
 }
 
 internal extension SignalingClient {
+    
     static func radix(
         packer: Packer,
         unpacker: Unpacker,
@@ -90,7 +91,7 @@ internal extension SignalingClient {
             
             let task = Task<Void, Never> {
                 do {
-                    for try await data in await transport.incomingMessages() {
+                    for try await data in try await transport.incomingMessages() {
                         try Task.checkCancellation()
                         let incomingMsg = try jsonDecoder.decode(RadixSignalMsg.Incoming.self, from: data)
                         incomingMessagesAsyncThrowingPassthroughSubject.send(incomingMsg)

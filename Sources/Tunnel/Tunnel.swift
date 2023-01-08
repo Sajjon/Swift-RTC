@@ -35,8 +35,8 @@ public struct Tunnel<ID, ReadyState, IncomingMessage, OutgoingMessage>: Disconne
 public extension Tunnel {
 
     typealias GetID = @Sendable () -> ID
-    typealias ReadyStateUpdates = @Sendable () async -> AnyAsyncSequence<ReadyState>
-    typealias IncomingMessages = @Sendable () async -> AnyAsyncSequence<IncomingMessage>
+    typealias ReadyStateUpdates = @Sendable () async throws -> AnyAsyncSequence<ReadyState>
+    typealias IncomingMessages = @Sendable () async throws -> AnyAsyncSequence<IncomingMessage>
     typealias Send = @Sendable (OutgoingMessage) async throws -> Void
     typealias Close = @Sendable () async -> Void
     
@@ -97,8 +97,8 @@ public extension Tunnel {
     
     static func multicast<ReadyStateAsync, IncomingMessagesAsync>(
         getID: @escaping @autoclosure @Sendable () -> ID,
-        readyStateAsyncSequence: @escaping @Sendable () async -> ReadyStateAsync,
-        incomingMessagesAsyncSequence: @escaping @Sendable () async -> IncomingMessagesAsync,
+        readyStateAsyncSequence: @escaping @Sendable () async throws -> ReadyStateAsync,
+        incomingMessagesAsyncSequence: @escaping @Sendable () async throws -> IncomingMessagesAsync,
         send: @escaping Send,
         close: @escaping Close
     ) -> Self where
@@ -116,13 +116,13 @@ public extension Tunnel {
         return Self(
             getID: getID,
             readyStateUpdates: {
-                await readyStateAsyncSequence()
+                try await readyStateAsyncSequence()
                 .multicast(reaadyStateMulticastSubject)
                 .autoconnect()
                 .eraseToAnyAsyncSequence()
             },
             incomingMessages: {
-                await incomingMessagesAsyncSequence()
+                try await incomingMessagesAsyncSequence()
                 .multicast(incomingMulticastSubject)
                 .autoconnect()
                 .eraseToAnyAsyncSequence()

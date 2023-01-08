@@ -19,31 +19,44 @@ public extension SignalingClient {
 
 public extension SignalingClient.Transport {
     
-    static func webSocket(url: URL) -> Self {
+    static func webSocket(
+        peerConnectionID: PeerConnectionID,
+        url: URL
+    ) -> Self {
         
-        let wsActor = WebSocketActor(url: url)
-        
-        return Self.multicast(
+        Self.multicast(
             getID: url,
             readyStateAsyncSequence: {
-                await wsActor.readyStateAsyncSequence()
+                let aSeq: AnyAsyncSequence<WebSocketState> = await WebSocketActor.shared.open(id: peerConnectionID, url: url, protocols: []).eraseToAnyAsyncSequence()
+                return aSeq
             },
             incomingMessagesAsyncSequence: {
-                await wsActor.incomingMessageAsyncSequence().compactMap {
-                    switch $0 {
-                    case let .data(data): return data
-                    case let .string(string): return Data(string.utf8)
-                    @unknown default:
-                        debugPrint("Unknown websocket message type: \($0)")
-                        return nil
+                try await WebSocketActor.shared.receive(id: peerConnectionID)
+                    .map { (result: TaskResult<WebSocketActor.Message>) throws -> WebSocketActor.Message in
+                        switch result {
+                        case let .failure(error):
+                            throw error
+                        case let .success(message):
+                            return message
+                        }
                     }
-                }
+                    .map { (msg: WebSocketActor.Message) -> Data in
+                        switch msg {
+                        case let .data(data): return data
+                        case let .string(string): return Data(string.utf8)
+                        }
+                    }
+                    .eraseToAnyAsyncSequence()
             },
             send: {
-                try await wsActor.send(data: $0)
+                try await WebSocketActor.shared.send(id: peerConnectionID, message: .data($0))
             },
             close: {
-                await wsActor.close()
+                try! await WebSocketActor.shared.close(
+                    id: peerConnectionID,
+                    with: .goingAway,
+                    reason: Data("SignalingClient.Transport-close".utf8)
+                )
             }
         )
         

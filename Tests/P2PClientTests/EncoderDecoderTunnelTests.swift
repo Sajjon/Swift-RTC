@@ -75,14 +75,14 @@ final class TunnelTests: XCTestCase {
         let _ = (try await initiatorConnectedToAnswerer.value, try await answererConnectedToInitiator.value)
         
         Task {
-            for try await msg in await initiatorToAnswererTunnel.incomingMessages().prefix(1) {
+            for try await msg in try await initiatorToAnswererTunnel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Initiator".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 initiatorReceivedMsgExp.fulfill()
             }
         }
         
         Task {
-            for try await msg in await answererToInitiatorTunnel.incomingMessages().prefix(1) {
+            for try await msg in try await answererToInitiatorTunnel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Answerer".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 answererReceivedMsgExp.fulfill()
             }

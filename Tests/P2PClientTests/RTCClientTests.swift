@@ -58,17 +58,17 @@ final class RTCClientTests: XCTestCase {
         let answererConnectedToInitiator = Task {
             let _ = try await answererToInitiatorChannel.readyStateUpdates().first(where: { $0 == .open })
         }
-        let _ = (try await initiatorConnectedToAnswerer.value, try await answererConnectedToInitiator.value)
+        let _ = try await (initiatorConnectedToAnswerer.value, answererConnectedToInitiator.value)
         
         Task {
-            for try await msg in await initiatorToAnswererChannel.incomingMessages().prefix(1) {
+            for try await msg in try await initiatorToAnswererChannel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Initiator".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 initiatorReceivedMsgExp.fulfill()
             }
         }
         
         Task {
-            for try await msg in await answererToInitiatorChannel.incomingMessages().prefix(1) {
+            for try await msg in try await answererToInitiatorChannel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Answerer".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 answererReceivedMsgExp.fulfill()
             }

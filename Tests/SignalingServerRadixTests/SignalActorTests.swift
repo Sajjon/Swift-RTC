@@ -23,7 +23,6 @@ public extension SignalingClient.Transport {
 #endif // DEBUG
 
 
-
 final class SignalActorTests: XCTestCase {
     
     func test_that_actor_splits_incomingMessage_async_seq_into_primitiveSeq_and_sipEventSeq() async throws {
