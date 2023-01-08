@@ -85,11 +85,14 @@ public extension SignalingClient.Transport {
         )
     }
     
-    static func emulatingServerBetween() -> (caller: Self, answerer: Self) {
-        
-        let fromCallerSubject = AsyncPassthroughSubject<Data>()
-        let fromAnswererSubject = AsyncPassthroughSubject<Data>()
-        
+
+    static func emulatingServer<IncomingMessagesAsync>(
+        incoming: IncomingMessagesAsync,
+        outgoingSubject: AsyncPassthroughSubject<Data>
+    ) -> Self  where   IncomingMessagesAsync: AsyncSequence & Sendable,
+                       IncomingMessagesAsync.AsyncIterator: Sendable,
+                       IncomingMessagesAsync.Element == IncomingMessage
+    {
         @Sendable func transform(outgoing data: Data) throws -> Data {
             let jsonDecoder = JSONDecoder()
             let jsonEncoder = JSONEncoder()
@@ -99,20 +102,29 @@ public extension SignalingClient.Transport {
             return transformed
         }
         
-        let caller: Self = .multicastPassthrough(
+        return .multicastPassthrough(
+            incoming: incoming,
+            send: {
+                let transformed = try transform(outgoing: $0)
+                outgoingSubject.send(transformed)
+            }
+        )
+    }
+    
+    static func emulatingServerBetween() -> (caller: Self, answerer: Self) {
+        
+        let fromCallerSubject = AsyncPassthroughSubject<Data>()
+        let fromAnswererSubject = AsyncPassthroughSubject<Data>()
+        
+        let caller: Self =  .emulatingServer(
             incoming: fromAnswererSubject.eraseToAnyAsyncSequence(),
-            send: {
-                let transformed = try transform(outgoing: $0)
-                fromCallerSubject.send(transformed)
-            }
+            outgoingSubject: fromCallerSubject
         )
-        let answerer: Self = .multicastPassthrough(
-            incoming: fromCallerSubject.eraseToAnyAsyncSequence(),
-            send: {
-                let transformed = try transform(outgoing: $0)
-                fromAnswererSubject.send(transformed)
-            }
+        let answerer: Self = .emulatingServer(
+            incoming: fromCallerSubject,
+            outgoingSubject: fromAnswererSubject
         )
+
         return (caller, answerer)
         
     }
