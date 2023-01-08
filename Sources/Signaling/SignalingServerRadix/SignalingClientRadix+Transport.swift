@@ -21,17 +21,18 @@ public extension SignalingClient.Transport {
     
     static func webSocket(
         peerConnectionID: PeerConnectionID,
+        clientSource: ClientSource,
         url: URL
     ) -> Self {
-        
-        Self.multicast(
+        let id = WebSocketActor.ID.init(peerConnectionID: peerConnectionID, clientSource: clientSource)
+        return Self.multicast(
             getID: url,
             readyStateAsyncSequence: {
-                let aSeq: AnyAsyncSequence<WebSocketState> = await WebSocketActor.shared.open(id: peerConnectionID, url: url, protocols: []).eraseToAnyAsyncSequence()
-                return aSeq
+                await WebSocketActor.shared.open(id: id, url: url)
+                    .eraseToAnyAsyncSequence()
             },
             incomingMessagesAsyncSequence: {
-                try await WebSocketActor.shared.receive(id: peerConnectionID)
+                try await WebSocketActor.shared.receive(id: id)
                     .map { (result: TaskResult<WebSocketActor.Message>) throws -> WebSocketActor.Message in
                         switch result {
                         case let .failure(error):
@@ -49,11 +50,11 @@ public extension SignalingClient.Transport {
                     .eraseToAnyAsyncSequence()
             },
             send: {
-                try await WebSocketActor.shared.send(id: peerConnectionID, message: .data($0))
+                try await WebSocketActor.shared.send(id: id, message: .data($0))
             },
             close: {
                 try! await WebSocketActor.shared.close(
-                    id: peerConnectionID,
+                    id: id,
                     with: .goingAway,
                     reason: Data("SignalingClient.Transport-close".utf8)
                 )

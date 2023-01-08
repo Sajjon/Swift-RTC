@@ -19,12 +19,21 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
 import Foundation
 import P2PModels
+import AsyncExtensions
 
 // MARK: WebSocketActor
 public final actor WebSocketActor: GlobalActor {
-    public typealias ID = PeerConnectionID
+    public struct ID: Sendable, Hashable {
+        public let peerConnectionID: PeerConnectionID
+        public let clientSource: ClientSource
+        public init(peerConnectionID: PeerConnectionID, clientSource: ClientSource) {
+            self.peerConnectionID = peerConnectionID
+            self.clientSource = clientSource
+        }
+    }
     typealias Dependencies = (socket: URLSessionWebSocketTask, delegate: Delegate)
     var dependencies: [ID: Dependencies] = [:]
     
