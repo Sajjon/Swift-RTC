@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Bite
 
 public struct RPCMessage: Codable, Sendable, Hashable, CustomStringConvertible {
   

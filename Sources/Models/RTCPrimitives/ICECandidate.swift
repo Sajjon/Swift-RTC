@@ -7,14 +7,15 @@
 
 import Foundation
 public struct ICECandidate: Sendable, Hashable, Codable, CustomStringConvertible {
-   
-    public let sdp: String
+    
+    public let candidate: String
+    public var sdp: String { candidate }
     public let sdpMLineIndex: Int32
     public let sdpMid: String?
     public let serverUrl: String?
     
     public init(sdp: String, sdpMLineIndex: Int32, sdpMid: String?, serverUrl: String?) {
-        self.sdp = sdp
+        self.candidate = sdp
         self.sdpMLineIndex = sdpMLineIndex
         self.sdpMid = sdpMid
         self.serverUrl = serverUrl

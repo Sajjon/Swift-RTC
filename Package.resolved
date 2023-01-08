@@ -10,15 +10,6 @@
       }
     },
     {
-      "identity" : "bite",
-      "kind" : "remoteSourceControl",
-      "location" : "git@github.com:radixdlt/Bite.git",
-      "state" : {
-        "revision" : "96fd910f1a65e7224d1c0c8022738e6a34a1296a",
-        "version" : "0.0.4"
-      }
-    },
-    {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-algorithms",

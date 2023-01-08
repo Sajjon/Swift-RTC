@@ -90,7 +90,7 @@ public extension SignalingClient.Unpacker {
     /// An unpacker which assumes that the `encryptedPayload` of the RPCMessage is in fact NOT
     /// encrypted and tried to JSON decode it into an RTCPrimitive.
     static var jsonDecodeOnly: Self {
-        .init(unpack: { (rpcMessage: RPCMessage) in
+        .init(unpack: { (rpcMessage: RPCMessage) throws -> RTCPrimitive in
             try _decodeWebRTCPrimitive(
                 method: rpcMessage.method,
                 // Assumes that the `encryptedPayload` is infact NOT encrypted.
@@ -107,16 +107,16 @@ public extension SignalingClient.Packer {
     static func jsonEncodeOnly(
         connectionID: PeerConnectionID = .placeholder,
         jsonEncoder: JSONEncoder = .init(),
-        source: ClientSource = .mobileWallet,
+        source: ClientSource,
         requestId: @escaping @Sendable () -> String = { UUID().uuidString }
     ) -> Self {
-        .init(pack: {
+        .init(pack: { (primitive: RTCPrimitive) throws -> RPCMessage in
             
-            let json = try jsonEncoder.encode($0)
+            let json = try jsonEncoder.encode(primitive)
             
             let unencrypted = RPCMessageUnencrypted(
-                method: $0.method,
-                source: .mobileWallet,
+                method: primitive.method,
+                source: source,
                 connectionId: connectionID,
                 requestId: requestId(),
                 unencryptedPayload: json
@@ -136,14 +136,38 @@ public extension SignalingClient {
     typealias Transport = Tunnel<URL, WebSocketState, Data, Data>
 }
 
+
+public extension Data {
+    
+    func printFormatedJSON() -> String {
+        if let json = try? JSONSerialization.jsonObject(with: self, options: .mutableContainers),
+           let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted)
+        {
+            return  String(decoding: jsonData, as: UTF8.self)
+        } else {
+            fatalError("Malformed JSON")
+        }
+    }
+}
+
 public extension SignalingClient {
     
+    static func radix(
+        connectionSecrets: ConnectionSecrets,
+        transport: Transport
+    ) -> Self {
+        Self.radix(
+            packer: .radix(connectionSecrets: connectionSecrets),
+            unpacker: .radix(connectionSecrets: connectionSecrets),
+            transport: transport
+        )
+    }
     
-    
-    static func with(
+    static func radix(
         packer: Packer,
         unpacker: Unpacker,
-        transport: Transport
+        transport: Transport,
+        requireMessageSentConfirmationFromSignalingServerWhenSending: Bool = true
     ) -> Self {
         
         actor SignalActor {
@@ -156,13 +180,18 @@ public extension SignalingClient {
             private let jsonEncoder: JSONEncoder
             private let jsonDecoder: JSONDecoder
             
+            // Useful for e.g. testing to set this to `false`.
+            private let requireMessageSentConfirmationFromSignalingServerWhenSending: Bool
+            
             init(
                 packer: Packer,
                 unpacker: Unpacker,
                 transport: Transport,
                 jsonEncoder: JSONEncoder = .init(),
-                jsonDecoder: JSONDecoder = .init()
+                jsonDecoder: JSONDecoder = .init(),
+                requireMessageSentConfirmationFromSignalingServerWhenSending: Bool
             ) {
+                self.requireMessageSentConfirmationFromSignalingServerWhenSending = requireMessageSentConfirmationFromSignalingServerWhenSending
                 self.packer = packer
                 self.unpacker = unpacker
                 self.transport = transport
@@ -179,6 +208,7 @@ public extension SignalingClient {
                             incomingMessagesAsyncThrowingPassthroughSubject.send(incomingMsg)
                         }
                     } catch {
+                        print("✨❌ failed to json decode? error: \(String(describing: error))")
                         // FIXME: Error-handling: Should we we change this task to be throwing and (implicitly) cancel this Task by (re)throwing the error? Should we also call `transport.close`?
                         incomingMessagesAsyncThrowingPassthroughSubject.send(.failure(error))
                     }
@@ -191,18 +221,22 @@ public extension SignalingClient {
                 task?.cancel()
             }
 
-            func sendToRemote(rtcPrimitive: RTCPrimitive) async throws {
+            // Only reason we return outgoing message is for tests
+            func sendToRemote(rtcPrimitive: RTCPrimitive) async throws -> Data {
                 let outgoingMsg = try packer.pack(rtcPrimitive)
-                let data = try jsonEncoder.encode(outgoingMsg)
-                try await transport.send(data)
-               
+                let outgoingJSONData = try jsonEncoder.encode(outgoingMsg)
+                try await transport.send(outgoingJSONData)
+                guard requireMessageSentConfirmationFromSignalingServerWhenSending else {
+                    // skip waiting for message confirmation
+                    return outgoingJSONData // returned for tests
+                }
                 for try await result in incomingMessagesAsyncThrowingPassthroughSubject
                     .compactMap({ $0.responseForRequest?.resultOfRequest(id: outgoingMsg.requestId)})
                 {
                     switch result {
                     case .success:
                         // Received message received confirmation from Signaling Server.
-                        return
+                        return outgoingJSONData  // returned for tests
                     case let .failure(errorFromSignalingServer):
                         throw errorFromSignalingServer
                     }
@@ -232,7 +266,12 @@ public extension SignalingClient {
             }
         }
         
-        let signalActor = SignalActor(packer: packer, unpacker: unpacker, transport: transport)
+        let signalActor = SignalActor(
+            packer: packer,
+            unpacker: unpacker,
+            transport: transport,
+            requireMessageSentConfirmationFromSignalingServerWhenSending: requireMessageSentConfirmationFromSignalingServerWhenSending
+        )
         
         return Self(
             shutdown: { await signalActor.shutdown() },
@@ -242,6 +281,7 @@ public extension SignalingClient {
         )
     }
 }
+
 
 // MARK: SignalingClient.Transport
 public extension SignalingClient.Transport where ID == URL, ReadyState == WebSocketState, OutgoingMessage == Data, IncomingMessage == Data {

@@ -31,7 +31,10 @@ public struct SignalingClient: Sendable {
 
 public extension SignalingClient {
     typealias Shutdown = @Sendable () async throws -> Void
-    typealias SendToRemote = @Sendable (RTCPrimitive) async throws -> Void
+    
+    // Only reason we return outgoing message is for tests
+    typealias SendToRemote = @Sendable (RTCPrimitive) async throws -> Data
+    
     typealias ReceiveFromRemoteAsyncSequence = @Sendable () async -> AnyAsyncSequence<RTCPrimitive>
     typealias SessionInitiationProtocolEventsAsyncSequence = @Sendable () async -> AnyAsyncSequence<SessionInitiationProtocolEvent>
 }

@@ -13,16 +13,19 @@ public enum RadixSignalMsg: Sendable, Hashable {
 }
 
 public extension RadixSignalMsg {
+    
     var incoming: Incoming? {
         switch self {
         case let .incoming(value): return value
         case .outgoing: return nil
         }
     }
+    
     var outgoing: Outgoing? {
         switch self {
         case let .outgoing(value): return value
         case .incoming: return nil
         }
     }
+    
 }

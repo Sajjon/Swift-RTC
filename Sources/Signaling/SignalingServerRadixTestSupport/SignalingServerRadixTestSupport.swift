@@ -29,19 +29,19 @@ public extension Tunnel.Decoder where Tunnel.In == Data, Tunnel.Out == Data {
 public extension SignalingClient.Transport {
 
 
-    static func multicastPassthrough(
-        stream incomingMessagesAsyncStream: AsyncStream<Data>,
-        continuation: AsyncStream<Data>.Continuation
-    ) -> Self {
+    static func multicastPassthrough<IncomingMessagesAsync>(
+        incoming: IncomingMessagesAsync,
+        send: @escaping Send,
+        close: Close? = { print("closed called") }
+    ) -> Self where   IncomingMessagesAsync: AsyncSequence & Sendable,
+                      IncomingMessagesAsync.AsyncIterator: Sendable,
+                      IncomingMessagesAsync.Element == IncomingMessage {
         Self.multicast(
             getID: { fatalError("No ID") }(),
             readyStateAsyncSequence: AsyncStream(unfolding: { fatalError("No ready state") }),
-            incomingMessagesAsyncSequence: incomingMessagesAsyncStream,
-            send: {
-                continuation.yield($0)
-            }, close: {
-                continuation.finish()
-            }
+            incomingMessagesAsyncSequence: incoming,
+            send: send,
+            close: { await close?() }
         )
     }
 }
@@ -49,17 +49,23 @@ public extension SignalingClient.Transport {
 // MARK: SignalingClient
 public extension SignalingClient {
     static func passthrough(
-        stream: AsyncStream<Data>,
-        continuation: AsyncStream<Data>.Continuation,
+        transport: Transport,
         connectionID: PeerConnectionID = .placeholder,
         jsonEncoder: JSONEncoder = .init(),
-        source: ClientSource = .mobileWallet,
+        source: ClientSource,
+        requireMessageSentConfirmationFromSignalingServerWhenSending: Bool = false,
         requestId: @escaping @Sendable () -> String = { UUID().uuidString }
     ) -> Self {
-        Self.with(
-            packer: .jsonEncodeOnly(connectionID: connectionID, jsonEncoder: jsonEncoder, source: source, requestId: requestId),
+        Self.radix(
+            packer: .jsonEncodeOnly(
+                connectionID: connectionID,
+                jsonEncoder: jsonEncoder,
+                source: source,
+                requestId: requestId
+            ),
             unpacker: .jsonDecodeOnly,
-            transport: .multicastPassthrough(stream: stream, continuation: continuation)
+            transport: transport,
+            requireMessageSentConfirmationFromSignalingServerWhenSending: requireMessageSentConfirmationFromSignalingServerWhenSending
         )
     }
 }

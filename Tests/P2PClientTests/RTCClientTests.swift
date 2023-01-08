@@ -17,18 +17,20 @@ import XCTest
 final class RTCClientTests: XCTestCase {
     
     func test_session() async throws {
-
+        
         let initiatorReceivedMsgExp = expectation(description: "Initiator received msg")
         let answererReceivedMsgExp = expectation(description: "Answerer received msg")
         
         let (initiatorSignaling, answererSignaling) = SignalingClient.passthrough()
         
         let initiator = RTCClient(
-            signaling: initiatorSignaling
+            signaling: initiatorSignaling,
+            source: .browserExtension
         )
         
         let answerer = RTCClient(
-            signaling: answererSignaling
+            signaling: answererSignaling,
+            source: .mobileWallet
         )
         let pcID: PeerConnectionID = 0
         let webRTCConfig: WebRTCConfig = .default
@@ -51,19 +53,19 @@ final class RTCClientTests: XCTestCase {
         let initiatorConnectedToAnswerer = Task {
             let _ = try await initiatorToAnswererChannel.readyStateUpdates().first(where: { $0 == .open })
         }
-
+        
         let answererConnectedToInitiator = Task {
             let _ = try await answererToInitiatorChannel.readyStateUpdates().first(where: { $0 == .open })
         }
         let _ = (try await initiatorConnectedToAnswerer.value, try await answererConnectedToInitiator.value)
-
+        
         Task {
             for try await msg in await initiatorToAnswererChannel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Initiator".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
                 initiatorReceivedMsgExp.fulfill()
             }
         }
-
+        
         Task {
             for try await msg in await answererToInitiatorChannel.incomingMessages().prefix(1) {
                 XCTAssertEqual(msg, Data("Hey Answerer".utf8), "Got unexpected: '\(String(data: msg, encoding: .utf8)!)'")
@@ -74,11 +76,11 @@ final class RTCClientTests: XCTestCase {
         Task {
             try await initiatorToAnswererChannel.send(Data("Hey Answerer".utf8))
         }
-
+        
         Task {
             try await answererToInitiatorChannel.send(Data("Hey Initiator".utf8))
         }
-
+        
         await waitForExpectations(timeout: 5)
         
         try await initiator.disconnectChannel(id: dcID, peerConnectionID: pcID)
@@ -95,38 +97,73 @@ final class RTCClientTests: XCTestCase {
     }
 }
 
+extension SignalingClient.Transport {
+    
+    static func emulatingServerBetween() -> (caller: Self, answerer: Self) {
+        
+        let fromCallerSubject = AsyncPassthroughSubject<Data>()
+        let fromAnswererSubject = AsyncPassthroughSubject<Data>()
+        
+        @Sendable func transform(outgoing data: Data) throws -> Data {
+            let jsonDecoder = JSONDecoder()
+            let jsonEncoder = JSONEncoder()
+            let rpc = try jsonDecoder.decode(RPCMessage.self, from: data)
+            let incoming = RadixSignalMsg.Incoming.fromRemoteClientOriginally(rpc)
+            let transformed = try jsonEncoder.encode(incoming)
+//            print("🌸 transformed from:\n\n\(data.printFormatedJSON())\nto:\n\n\(transformed.printFormatedJSON())\n")
+            return transformed
+        }
+        
+        let caller: SignalingClient.Transport = .multicastPassthrough(
+            incoming: fromAnswererSubject.eraseToAnyAsyncSequence(),
+            send: {
+                let transformed = try transform(outgoing: $0)
+                fromCallerSubject.send(transformed)
+            }
+        )
+        let answerer: SignalingClient.Transport = .multicastPassthrough(
+            incoming: fromCallerSubject.eraseToAnyAsyncSequence(),
+            send: {
+                let transformed = try transform(outgoing: $0)
+                fromAnswererSubject.send(transformed)
+            }
+        )
+        return (caller, answerer)
+        
+    }
+}
 extension SignalingClient {
-
     static func passthrough(
         connectionID: PeerConnectionID = .placeholder,
         jsonEncoder: JSONEncoder = .init(),
+        jsonDecoder: JSONDecoder = .init(),
         callerSource: ClientSource = .mobileWallet,
         answererSource: ClientSource = .browserExtension,
         requestId: @escaping @Sendable () -> String = { UUID().uuidString }
     ) -> (caller: Self, answerer: Self) {
         
-        let (toCallerAsyncStream, fromCallerAsyncContinuation) = AsyncStream.streamWithContinuation(Data.self)
-        
-        let (toAnswererAsyncStream, fromAnswererAsyncContinuation) = AsyncStream.streamWithContinuation(Data.self)
-       
+        let (callerTransport, answererTransport) = Transport.emulatingServerBetween()
+
         let caller = Self.passthrough(
-            stream: toCallerAsyncStream,
-            continuation: fromAnswererAsyncContinuation,
+            transport: callerTransport,
             connectionID: connectionID,
             jsonEncoder: jsonEncoder,
             source: callerSource,
             requestId: requestId
         )
-       
+        
         let answerer = Self.passthrough(
-            stream: toAnswererAsyncStream,
-            continuation: fromCallerAsyncContinuation,
+            transport: answererTransport,
             connectionID: connectionID,
             jsonEncoder: jsonEncoder,
             source: answererSource,
             requestId: requestId
         )
-       
-        return (caller, answerer)
+        
+        return (
+            caller: caller,
+            answerer: answerer
+        )
+        
     }
 }

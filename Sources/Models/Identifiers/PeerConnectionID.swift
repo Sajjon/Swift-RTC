@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Bite
 
 public struct PeerConnectionID: Sendable, Hashable, Codable, CustomStringConvertible {
     public let data: HexCodable

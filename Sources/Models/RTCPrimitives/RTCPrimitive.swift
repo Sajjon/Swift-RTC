@@ -56,3 +56,20 @@ public extension RTCPrimitive {
         return ices
     }
 }
+
+public extension RTCPrimitive {
+    
+    func encode(to encoder: Encoder) throws {
+        var singleValueContainer = encoder.singleValueContainer()
+        switch self {
+        case let .offer(value):
+            try singleValueContainer.encode(value)
+        case let .answer(value):
+            try singleValueContainer.encode(value)
+        case let .removeICEs(values):
+            try singleValueContainer.encode(values)
+        case let .addICE(value):
+            try singleValueContainer.encode(value)
+        }
+    }
+}

@@ -39,11 +39,13 @@ final class TunnelTests: XCTestCase {
         let (initiatorSignaling, answererSignaling) = SignalingClient.passthrough()
         
         let initiator = RTCClient(
-            signaling: initiatorSignaling
+            signaling: initiatorSignaling,
+            source: .browserExtension
         )
         
         let answerer = RTCClient(
-            signaling: answererSignaling
+            signaling: answererSignaling,
+            source: .mobileWallet
         )
         let pcID: PeerConnectionID = 0
         let webRTCConfig: WebRTCConfig = .default

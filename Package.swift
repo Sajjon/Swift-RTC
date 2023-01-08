@@ -10,7 +10,6 @@ let targets: [Target] = [
         name: "P2PModels",
         dependencies: [
             "AsyncExtensions",
-            .product(name: "Bite", package: "Bite"),
             .product(name: "Tagged", package: "swift-tagged"),
             .product(name: "Collections", package: "swift-collections"),
             .product(name: "SwiftLogConsoleColors", package: "swift-log-console-colors"),
@@ -135,9 +134,6 @@ let package = Package(
         .package(url: "https://github.com/stasel/WebRTC", from: "108.0.0"),
         
         // RDX Works
-        // We use SSH because repos are private...
-        .package(url: "git@github.com:radixdlt/Bite.git", from: "0.0.4"),
-        
         .package(url: "https://github.com/sideeffect-io/AsyncExtensions", from: "0.5.2"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
         .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),

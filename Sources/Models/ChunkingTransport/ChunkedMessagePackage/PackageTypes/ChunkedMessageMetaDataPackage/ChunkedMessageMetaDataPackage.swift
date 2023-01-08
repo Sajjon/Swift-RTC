@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Bite
 
 public struct ChunkedMessageMetaDataPackage: Codable, Sendable & Equatable {
     
