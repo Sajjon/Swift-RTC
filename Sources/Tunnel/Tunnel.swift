@@ -180,3 +180,20 @@ public extension Tunnel {
         )
     }
 }
+
+#if DEBUG
+
+// MARK: Encoder Passthrough
+public extension Tunnel.Encoder where Tunnel.In == Data, Tunnel.Out == Data {
+    static var passthrough: Self {
+        Self(encode: { $0 })
+    }
+}
+
+// MARK: Decoder Passthrough
+public extension Tunnel.Decoder where Tunnel.In == Data, Tunnel.Out == Data {
+    static var passthrough: Self {
+        Self(decode: { $0 })
+    }
+}
+#endif

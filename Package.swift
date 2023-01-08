@@ -29,7 +29,6 @@ let targets: [Target] = [
         name: "PeerConnectionTests",
         dependencies: [
             "P2PPeerConnection",
-            "SignalingServerRadixTestSupport",
         ]
     ),
     .target(
@@ -79,12 +78,12 @@ let targets: [Target] = [
         ],
         path: "Sources/Signaling/SignalingServerRadix"
     ),
-      .target(
-        name: "SignalingServerRadixTestSupport",
+
+    .testTarget(
+        name: "SignalingServerRadixTests",
         dependencies: [
-            "SignalingServerRadix",
-        ],
-        path: "Sources/Signaling/SignalingServerRadixTestSupport"
+            "SignalingServerRadix"
+        ]
     ),
     .testTarget(
         name: "AssembleSplitMessageTests",
@@ -99,6 +98,7 @@ let targets: [Target] = [
             "P2PPeerConnection",
             "SignalingServerClient",
             "Tunnel",
+            "SignalingServerRadix",
         ],
         path: "Sources/Client"
     ),
@@ -106,7 +106,6 @@ let targets: [Target] = [
         name: "P2PClientTests",
         dependencies: [
             "P2PClient",
-            "SignalingServerRadixTestSupport"
         ]
     )
 ]

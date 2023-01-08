@@ -49,6 +49,20 @@ public extension RPCMessage {
     }
 }
 
+
+public extension RTCPrimitive {
+    var rpcMethod: RPCMethod {
+        switch self {
+        case .answer: return .answer
+        case .addICE: return .addICE
+        case .removeICEs: return .removeICEs
+        case .offer: return .offer
+        }
+    }
+}
+
+
+
 public extension RPCMessage {
     var description: String {
         """

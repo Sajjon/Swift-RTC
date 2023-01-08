@@ -71,3 +71,18 @@ public extension HexCodable {
     static let deadbeef32Bytes = Self(data: .deadbeef32Bytes)
     var count: Int { data.count }
 }
+
+#if DEBUG
+public extension Data {
+    
+    func printFormatedJSON() -> String {
+        if let json = try? JSONSerialization.jsonObject(with: self, options: .mutableContainers),
+           let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted)
+        {
+            return  String(decoding: jsonData, as: UTF8.self)
+        } else {
+            fatalError("Malformed JSON")
+        }
+    }
+}
+#endif

@@ -7,7 +7,12 @@
 
 import Foundation
 
-public enum RTCPrimitive: Sendable, Hashable, Codable {
+public enum RTCPrimitive:
+    Sendable,
+        Hashable,
+        Encodable
+ /* NOT `Decodable` because decoding requires externally provided discriminator, see bottom of file */
+{
     case offer(Offer)
     case answer(Answer)
     case addICE(ICECandidate)
@@ -57,6 +62,7 @@ public extension RTCPrimitive {
     }
 }
 
+// MARK: Encodable
 public extension RTCPrimitive {
     
     func encode(to encoder: Encoder) throws {
@@ -73,3 +79,24 @@ public extension RTCPrimitive {
         }
     }
 }
+
+// MARK: Decode with Discriminator
+public extension RTCPrimitive {
+    static func decode(
+        method: RPCMethod,
+        data: Data,
+        jsonDecoder: JSONDecoder = .init()
+    ) throws -> Self {
+        switch method {
+        case .offer:
+            return try .offer(jsonDecoder.decode(Offer.self, from: data))
+        case .answer:
+            return try .answer(jsonDecoder.decode(Answer.self, from: data))
+        case .addICE:
+            return try .addICE(jsonDecoder.decode(ICECandidate.self, from: data))
+        case .removeICEs:
+            return try .removeICEs(jsonDecoder.decode([ICECandidate].self, from: data))
+        }
+    }
+}
+

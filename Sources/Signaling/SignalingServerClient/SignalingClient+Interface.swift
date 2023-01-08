@@ -11,19 +11,19 @@ import P2PModels
 
 public struct SignalingClient: Sendable {
     
-    public var sendRTCPrimitiveToRemote: SendToRemote
+    public var sendToRemote: SendToRemoteFunctionType
     public var rtcPrimitivesFromRemoteAsyncSequence: ReceiveFromRemoteAsyncSequence
     public var sessionInitiationProtocolEventsAsyncSequence: SessionInitiationProtocolEventsAsyncSequence?
     public var shutdown: Shutdown
    
     public init(
         shutdown: @escaping Shutdown,
-        sendRTCPrimitiveToRemote: @escaping SendToRemote,
+        sendToRemote: SendToRemoteFunctionType,
         rtcPrimitivesFromRemoteAsyncSequence: @escaping ReceiveFromRemoteAsyncSequence,
         sessionInitiationProtocolEventsAsyncSequence: SessionInitiationProtocolEventsAsyncSequence?
     ) {
         self.shutdown = shutdown
-        self.sendRTCPrimitiveToRemote = sendRTCPrimitiveToRemote
+        self.sendToRemote = sendToRemote
         self.rtcPrimitivesFromRemoteAsyncSequence = rtcPrimitivesFromRemoteAsyncSequence
         self.sessionInitiationProtocolEventsAsyncSequence = sessionInitiationProtocolEventsAsyncSequence
     }
@@ -32,8 +32,21 @@ public struct SignalingClient: Sendable {
 public extension SignalingClient {
     typealias Shutdown = @Sendable () async throws -> Void
     
-    // Only reason we return outgoing message is for tests
-    typealias SendToRemote = @Sendable (RTCPrimitive) async throws -> Data
+    struct SendToRemoteFunctionType: Sendable {
+        // Only reason we return outgoing message is for tests
+        public typealias SendAction = @Sendable (RTCPrimitive) async throws -> Data
+
+        private let sendAction: SendAction
+
+        public init(_ sendAction: @escaping SendAction) {
+            self.sendAction = sendAction
+        }
+
+        @discardableResult
+        public func callAsFunction(primitive: RTCPrimitive) async throws -> Data {
+            try await sendAction(primitive)
+        }
+    }
     
     typealias ReceiveFromRemoteAsyncSequence = @Sendable () async -> AnyAsyncSequence<RTCPrimitive>
     typealias SessionInitiationProtocolEventsAsyncSequence = @Sendable () async -> AnyAsyncSequence<SessionInitiationProtocolEvent>

@@ -11,8 +11,9 @@ import Foundation
 import P2PModels
 import P2PPeerConnection
 import SignalingServerClient
-@testable import SignalingServerRadixTestSupport
+import SignalingServerRadix
 import XCTest
+import Tunnel
 
 final class RTCClientTests: XCTestCase {
     
@@ -94,76 +95,5 @@ final class RTCClientTests: XCTestCase {
             try await answererToInitiatorChannel.send(Data("This message should never reach initiator.".utf8))
             XCTFail("Expected to fail when trying to send data over closed channel")
         } catch {}
-    }
-}
-
-extension SignalingClient.Transport {
-    
-    static func emulatingServerBetween() -> (caller: Self, answerer: Self) {
-        
-        let fromCallerSubject = AsyncPassthroughSubject<Data>()
-        let fromAnswererSubject = AsyncPassthroughSubject<Data>()
-        
-        @Sendable func transform(outgoing data: Data) throws -> Data {
-            let jsonDecoder = JSONDecoder()
-            let jsonEncoder = JSONEncoder()
-            let rpc = try jsonDecoder.decode(RPCMessage.self, from: data)
-            let incoming = RadixSignalMsg.Incoming.fromRemoteClientOriginally(rpc)
-            let transformed = try jsonEncoder.encode(incoming)
-//            print("🌸 transformed from:\n\n\(data.printFormatedJSON())\nto:\n\n\(transformed.printFormatedJSON())\n")
-            return transformed
-        }
-        
-        let caller: SignalingClient.Transport = .multicastPassthrough(
-            incoming: fromAnswererSubject.eraseToAnyAsyncSequence(),
-            send: {
-                let transformed = try transform(outgoing: $0)
-                fromCallerSubject.send(transformed)
-            }
-        )
-        let answerer: SignalingClient.Transport = .multicastPassthrough(
-            incoming: fromCallerSubject.eraseToAnyAsyncSequence(),
-            send: {
-                let transformed = try transform(outgoing: $0)
-                fromAnswererSubject.send(transformed)
-            }
-        )
-        return (caller, answerer)
-        
-    }
-}
-extension SignalingClient {
-    static func passthrough(
-        connectionID: PeerConnectionID = .placeholder,
-        jsonEncoder: JSONEncoder = .init(),
-        jsonDecoder: JSONDecoder = .init(),
-        callerSource: ClientSource = .mobileWallet,
-        answererSource: ClientSource = .browserExtension,
-        requestId: @escaping @Sendable () -> String = { UUID().uuidString }
-    ) -> (caller: Self, answerer: Self) {
-        
-        let (callerTransport, answererTransport) = Transport.emulatingServerBetween()
-
-        let caller = Self.passthrough(
-            transport: callerTransport,
-            connectionID: connectionID,
-            jsonEncoder: jsonEncoder,
-            source: callerSource,
-            requestId: requestId
-        )
-        
-        let answerer = Self.passthrough(
-            transport: answererTransport,
-            connectionID: connectionID,
-            jsonEncoder: jsonEncoder,
-            source: answererSource,
-            requestId: requestId
-        )
-        
-        return (
-            caller: caller,
-            answerer: answerer
-        )
-        
     }
 }

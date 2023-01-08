@@ -9,7 +9,6 @@ import Foundation
 import XCTest
 @testable import P2PClient
 @testable import Tunnel
-@testable import SignalingServerRadixTestSupport
 
 extension RTCClient {
     

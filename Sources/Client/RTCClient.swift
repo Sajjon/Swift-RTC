@@ -134,7 +134,7 @@ public extension RTCClient {
                     for await ice in peerConnection.generatedICECandidateAsyncSequence {
                         guard !Task.isCancelled else { return }
                         debugPrint("❄️ \(source): Generated new ICE candidate, sending to remote...")
-                        _ = try await self.signaling.sendRTCPrimitiveToRemote(.addICE(ice))
+                        try await self.signaling.sendToRemote(primitive: .addICE(ice))
                         debugPrint("❄️ \(source): Sent newly generated ICE candidate to remote")
                     }
                 }
@@ -160,7 +160,7 @@ public extension RTCClient {
                     try Task.checkCancellation()
                     for await ices in peerConnection.removeICECandidatesAsyncSequence {
                         guard !Task.isCancelled else { return }
-                        _ = try await self.signaling.sendRTCPrimitiveToRemote(.removeICEs(ices))
+                        try await self.signaling.sendToRemote(primitive: .removeICEs(ices))
                     }
                 }
 
@@ -224,7 +224,7 @@ private extension RTCClient {
 
         // Send `Offer` to remote
         debugPrint("☑️ \(source): Sending `Offer` to remote...")
-        _ = try await signaling.sendRTCPrimitiveToRemote(.offer(offer))
+        try await signaling.sendToRemote(primitive: .offer(offer))
         debugPrint("✅ \(source): Sent `Offer` to remote.")
 
         // Receive `Answer` from remote
@@ -268,7 +268,7 @@ private extension RTCClient {
 
         // Send `Answer` to remote
         debugPrint("☑️ \(source): Sending `Answer` to remote...")
-        _ = try await signaling.sendRTCPrimitiveToRemote(.answer(answer))
+        try await signaling.sendToRemote(primitive: .answer(answer))
         debugPrint("✅ \(source): Sent `Answer` to remote.")
         // done
         debugPrint("👭 \(source): Negotiation finished 🥈✅.")

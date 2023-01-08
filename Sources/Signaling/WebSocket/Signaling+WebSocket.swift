@@ -12,7 +12,6 @@ import SignalingServerClient
 
 extension URL: Sendable {}
 
-
 // MARK: WebSocketActor
 public actor WebSocketActor {
     public typealias IncomingMessage = URLSessionWebSocketTask.Message
