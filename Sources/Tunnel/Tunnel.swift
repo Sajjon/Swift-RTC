@@ -40,8 +40,8 @@ public extension Tunnel {
     typealias Send = @Sendable (OutgoingMessage) async throws -> Void
     typealias Close = @Sendable () async -> Void
     
-    typealias In = IncomingMessage
-    typealias Out = OutgoingMessage
+    typealias IncomingMessage = IncomingMessage
+    typealias OutgoingMessage = OutgoingMessage
 }
 
 // MARK: Equatable
@@ -73,7 +73,10 @@ public extension Tunnel {
 // MARK: Encoder
 public extension Tunnel {
     struct Encoder: Sendable {
-        public typealias Encode = @Sendable (OutgoingMessage) async throws -> Data
+        
+        /// An array of data because if we use a MessageSplitter one single `OutgoingMessage` is
+        /// split into an array of message chunks.
+        public typealias Encode = @Sendable (OutgoingMessage) async throws -> [Data]
         public var encode: Encode
         public init(encode: @escaping Encode) {
             self.encode = encode
@@ -84,7 +87,9 @@ public extension Tunnel {
 // MARK: Decoder
 public extension Tunnel {
     struct Decoder: Sendable {
-        public typealias Decode = @Sendable (Data) async throws -> IncomingMessage
+        /// Optional because if we use a MessageAssembler we need to wait for multiple packages
+        /// before we can output the IncomingMessage (assembled).
+        public typealias Decode = @Sendable (Data) async throws -> IncomingMessage?
         public var decode: Decode
         public init(decode: @escaping Decode) {
             self.decode = decode
@@ -184,14 +189,14 @@ public extension Tunnel {
 #if DEBUG
 
 // MARK: Encoder Passthrough
-public extension Tunnel.Encoder where Tunnel.In == Data, Tunnel.Out == Data {
+public extension Tunnel.Encoder where Tunnel.IncomingMessage == Data, Tunnel.OutgoingMessage == Data {
     static var passthrough: Self {
-        Self(encode: { $0 })
+        Self(encode: { [$0] })
     }
 }
 
 // MARK: Decoder Passthrough
-public extension Tunnel.Decoder where Tunnel.In == Data, Tunnel.Out == Data {
+public extension Tunnel.Decoder where Tunnel.IncomingMessage == Data, Tunnel.OutgoingMessage == Data {
     static var passthrough: Self {
         Self(decode: { $0 })
     }

@@ -27,13 +27,15 @@ public extension Tunnel where ID == DataChannelID, ReadyState == DataChannelStat
             getID: tunnel.id,
             readyStateAsyncSequence: { try await tunnel.readyStateUpdates() },
             incomingMessagesAsyncSequence: {
-                 try await tunnel.incomingMessages().map { data in
+                 try await tunnel.incomingMessages().compactMap { data in
                     try await decoder.decode(data)
                 }.eraseToAnyAsyncSequence()
             },
             send: { message in
-                let data = try await encoder.encode(message)
-                try await tunnel.send(data)
+                let dataMessages = try await encoder.encode(message)
+                for dataMessage in dataMessages {
+                    try await tunnel.send(dataMessage)
+                }
             },
             close: {
                 await tunnel.disconnect()

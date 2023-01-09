@@ -5,6 +5,8 @@
 //  Created by Alexander Cyon on 2022-12-28.
 //
 
+import MessageSplitter
+import MessageAssembler
 import P2PPeerConnection
 import SignalingServerClient
 import Tunnel
@@ -24,7 +26,23 @@ public actor RTCClient {
     }
 }
 
+/// An envelop for an application layer message to split or that was reassembled,
+/// containing the lower level split/reassemble protocol MessageID which is used
+/// to send message received receipts for incoming **application layer messages** or
+/// to use in order to confirm that outgoing messages was correcly received by
+/// remote peer by checking incoming message for confirmation receipts matching the id.
+public struct SplitOrReassembledEnvelop<Message: Sendable & Hashable>: Sendable, Hashable {
+    /// The application layer message to split or that was reassembled
+    public let message: Message
+
+    /// The ID of the chunks the message was split into or reassembled from.
+    public let idsOfChunks: ChunkedMessagePackage.MessageID
+}
+
 public extension RTCClient {
+    
+    typealias RadixTunnel = Tunnel<DataChannelID, DataChannelState, SplitOrReassembledEnvelop<ToWallet>, SplitOrReassembledEnvelop<FromWallet>>
+    
     /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
     func disconnectChannel(
         id channelID: DataChannelID,
@@ -39,28 +57,86 @@ public extension RTCClient {
         await connections.cancelDisconnectAndRemove(id: id)
     }
 
-    /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
-    /// exists.
-    func newTunnel<InMsg, OutMsg>(
-        peerConnectionID: PeerConnectionID,
-        channelID: DataChannelID,
-        config: DataChannelConfig,
-        encoder: Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg>.Encoder,
-        decoder: Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg>.Decoder
-    ) async throws -> Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg> {
-        // Create a new RTCDataChannel, wrapped in a `Tunnel`
-        let tunnel = try await newChannel(
+    actor FilterActor: GlobalActor {
+        public static let shared = FilterActor()
+        private var receivedMessagesByContentHash: Set<Data> = .init()
+        
+        /// returns `false` if this message should not be propagated to the application layer, otherwise `true`.
+        public func filter(_ assembledMessage: AssembledMessage) -> Bool {
+            guard !receivedMessagesByContentHash.contains(assembledMessage.messageHash) else {
+                return false
+            }
+            receivedMessagesByContentHash.insert(assembledMessage.messageHash)
+            return true
+        }
+    }
+    
+    /// Create a new tunnel using MessageSplitter and Reassembler, for sending
+    ///
+    /// This function will create a new `PeerConnection` if no current connection matching
+    /// the `peerConnectionID` exists.
+    ///
+    /// Decoded messages using MessageAssembler can be filtered by `filter`, by default
+    /// we do filter, you can opt out of this by specifying `filter: nil`, filtering is useful
+    /// when e.g. the Connector extension is resending messages if this client does not send
+    /// message received confirmation, we can thus prevent the same request from being displayed
+    /// twice if we filter it (protecting from potential bug somewhere in Connector Extension or this
+    /// client, in best of worlds the send message received confirmation logic should work).
+    func newTunnel(
+        id dataChannelID: DataChannelID,
+        config: Config,
+        filter: (@Sendable (AssembledMessage) async throws -> Bool)? = { await FilterActor.shared.filter($0) }
+    ) async throws -> RadixTunnel {
+        let peerConnectionID = config.connectionSecrets.connectionID
+        if await connections.containsID(peerConnectionID) == false {
+            try await newConnection(id: peerConnectionID, config: config.webRTC, negotiationRole: config.negotiationRole)
+        }
+        let jsonEncoder = JSONEncoder()
+        let jsonDecoder = JSONDecoder()
+        let messageSplitter = MessageSplitter()
+    
+        actor ChunkReceiver: GlobalActor {
+            let messageAssembler = MessageAssembler()
+            private var packagesByMsgID: [ChunkedMessagePackage.MessageID: [ChunkedMessagePackage]] = [:]
+            static let shared = ChunkReceiver()
+            func receive(packageChunk package: ChunkedMessagePackage) throws -> AssembledMessage? {
+                let id = package.messageId
+                guard
+                    let packages = packagesByMsgID[id],
+                    let assembled = try? messageAssembler.assemble(packages: packages)
+                else {
+                    packagesByMsgID[id] = [package]
+                    return nil
+                }
+               return assembled
+            }
+        }
+        
+        return try await newTunnel(
             peerConnectionID: peerConnectionID,
-            channelID: channelID,
-            config: config
-        )
-
-        // Create a new Application Layer `Tunnel` which encodes/decodes messages using
-        // `encoder` and `decoder`.
-        return Tunnel.live(
-            tunnel: tunnel,
-            encoder: encoder,
-            decoder: decoder
+            channelID: dataChannelID,
+            config: config.dataChannel,
+            encoder: .init(encode: { envelop in
+                let toDapp = envelop.message
+                let json = try jsonEncoder.encode(toDapp)
+                let chunks = try messageSplitter.split(message: json, messageID: .init())
+                return try chunks.map { try jsonEncoder.encode($0) }
+            }),
+            decoder: .init(decode: { data -> SplitOrReassembledEnvelop<ToWallet>? in
+                let chunk = try jsonDecoder.decode(ChunkedMessagePackage.self, from: data)
+                guard let assembled = try await ChunkReceiver.shared.receive(packageChunk: chunk) else {
+                    return nil
+                }
+                let toWallet = try jsonDecoder.decode(ToWallet.self, from: assembled.messageContent)
+                let envelop = SplitOrReassembledEnvelop<ToWallet>(message: toWallet, idsOfChunks: assembled.idOfChunks)
+                guard let filter else {
+                    return envelop
+                }
+                guard try await filter(assembled) else {
+                    return nil
+                }
+                return envelop
+            })
         )
     }
 
@@ -103,7 +179,7 @@ public extension RTCClient {
                     }
                 }
 
-                // RECONNECT by Signaling events
+                // RECONNECT by Signaling events - we probably dont want this?
                 _ = group.addTaskUnlessCancelled { [unowned self] in
                     try Task.checkCancellation()
                     if let sipEvents = await self.signaling.sessionInitiationProtocolEventsAsyncSequence?() {
@@ -193,6 +269,32 @@ public extension RTCClient {
 // MARK: Internal
 
 internal extension RTCClient {
+    
+    /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
+    /// exists.
+    func newTunnel<InMsg, OutMsg>(
+        peerConnectionID: PeerConnectionID,
+        channelID: DataChannelID,
+        config: DataChannelConfig,
+        encoder: Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg>.Encoder,
+        decoder: Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg>.Decoder
+    ) async throws -> Tunnel<DataChannelID, DataChannelState, InMsg, OutMsg> {
+        // Create a new RTCDataChannel, wrapped in a `Tunnel`
+        let tunnel = try await newChannel(
+            peerConnectionID: peerConnectionID,
+            channelID: channelID,
+            config: config
+        )
+
+        // Create a new Application Layer `Tunnel` which encodes/decodes messages using
+        // `encoder` and `decoder`.
+        return Tunnel.live(
+            tunnel: tunnel,
+            encoder: encoder,
+            decoder: decoder
+        )
+    }
+    
     /// Throws an error if no `PeerConnection` matching the `peerConnectionID`
     /// exists.
     func newChannel(
@@ -274,3 +376,4 @@ private extension RTCClient {
         debugPrint("👭 \(source): Negotiation finished 🥈✅.")
     }
 }
+

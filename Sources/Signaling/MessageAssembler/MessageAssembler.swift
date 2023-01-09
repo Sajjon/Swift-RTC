@@ -8,16 +8,17 @@
 import Foundation
 import P2PModels
 
-public final class ChunkedMessagePackageAssembler: Sendable {
+public final class MessageAssembler: Sendable {
     public init() {}
 }
 
 public struct AssembledMessage: Sendable, Hashable {
+    public let idOfChunks: ChunkedMessagePackage.MessageID
     public let messageContent: Data
     public let messageHash: Data
 }
 
-public extension ChunkedMessagePackageAssembler {
+public extension MessageAssembler {
     enum Error: LocalizedError, Sendable, Hashable {
         case foundReceiveMessageError(ChunkedMessageReceiveError)
         case parseError(ParseError)
@@ -138,6 +139,6 @@ public extension ChunkedMessagePackageAssembler {
             )
         }
         
-        return AssembledMessage(messageContent: message, messageHash: hash)
+        return AssembledMessage(idOfChunks: metaDataPackage.messageId, messageContent: message, messageHash: hash)
     }
 }

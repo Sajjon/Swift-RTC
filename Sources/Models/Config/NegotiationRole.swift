@@ -7,6 +7,6 @@
 
 import Foundation
 
-public enum NegotiationRole: String, Sendable, Hashable {
+public enum NegotiationRole: String, Sendable, Hashable, Codable {
     case initiator, answerer
 }

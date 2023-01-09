@@ -99,6 +99,8 @@ let targets: [Target] = [
             "SignalingServerClient",
             "Tunnel",
             "SignalingServerRadix",
+            "MessageSplitter",
+            "MessageAssembler",
         ],
         path: "Sources/Client"
     ),

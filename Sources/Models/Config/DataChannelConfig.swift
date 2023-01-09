@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct DataChannelConfig: Sendable, Hashable {
+public struct DataChannelConfig: Sendable, Hashable, Codable {
     public let isOrdered: Bool
     public let isNegotiated: Bool
     public init(isOrdered: Bool, isNegotiated: Bool) {

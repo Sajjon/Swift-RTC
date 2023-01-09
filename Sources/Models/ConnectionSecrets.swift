@@ -8,7 +8,7 @@
 import Foundation
 import CryptoKit
 
-public struct ConnectionSecrets: Sendable, Hashable {
+public struct ConnectionSecrets: Sendable, Hashable, Codable {
     public let connectionPassword: ConnectionPassword
     public let connectionID: PeerConnectionID
     public let encryptionKey: EncryptionKey
