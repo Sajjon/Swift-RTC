@@ -32,7 +32,6 @@ final class WebSocketTests: XCTestCase {
             let connectionSecrets = try ConnectionSecrets.from(connectionPassword: connectionPassword)
             return connectionSecrets.connectionID
         }()
-        print("🎉 connectionID: \(connectionID)")
         
         let mobileIsConnected = expectation(description: "mobile client is connected")
         let browserIsConnected = expectation(description: "browser client is connected")
@@ -40,7 +39,6 @@ final class WebSocketTests: XCTestCase {
         let browserNotifiedMobileConnected = expectation(description: "browser notified mobile connected")
         
       
-        
         let websocketBrowser = try SignalingClient.Transport.webSocket(
             peerConnectionID: connectionID,
             clientSource: .browserExtension,
@@ -49,11 +47,7 @@ final class WebSocketTests: XCTestCase {
                 source: .browserExtension
             )
         )
-        
-        // Websocket actor connects immediately and to not stress test WS server
-        // too much we give it 500 ms to connect first client before connecting next.
-        try await Task.sleep(nanoseconds: UInt64(0.5 * Double(NSEC_PER_SEC)))
-        
+     
         let websocketMobile = try SignalingClient.Transport.webSocket(
             peerConnectionID: connectionID,
             clientSource: .mobileWallet,
@@ -62,37 +56,8 @@ final class WebSocketTests: XCTestCase {
                 source: .mobileWallet
             )
         )
-  
-        
-        Task {
-            for try await mobileSIPEvent in try await websocketMobile
-                .incomingMessages()
-                .compactMap({ try SessionInitiationProtocolEvent.from($0) })
-            {
-                print("🔮 mobileSIPEvent: \(mobileSIPEvent)")
-                switch mobileSIPEvent {
-                case .remoteClientIsAlreadyConnected, .remoteClientJustConnected:
-                    mobileNotifiedBrowserConnected.fulfill()
-                case .remoteClientDisconnected: continue
-                }
-            }
-        }
-        
-        Task {
-            for try await browserSIPEvent in try await websocketBrowser
-                .incomingMessages()
-                .compactMap({ try SessionInitiationProtocolEvent.from($0) })
-            {
-                print("🔮 browserSIPEvent: \(browserSIPEvent)")
-                switch browserSIPEvent {
-                case .remoteClientIsAlreadyConnected, .remoteClientJustConnected:
-                    browserNotifiedMobileConnected.fulfill()
-                case .remoteClientDisconnected: continue
-                }
-            }
-        }
      
-        
+     
         Task {
             for try await mobileConnectionState in try await websocketMobile.readyStateUpdates() {
                 if mobileConnectionState == .connected {
@@ -108,8 +73,34 @@ final class WebSocketTests: XCTestCase {
                 }
             }
         }
+        wait(for: [mobileIsConnected, browserIsConnected], timeout: 5)
+        
+        Task {
+            for try await mobileSIPEvent in try await websocketMobile
+                .incomingMessages()
+                .compactMap({ try SessionInitiationProtocolEvent.from($0) })
+            {
+                switch mobileSIPEvent {
+                case .remoteClientIsAlreadyConnected, .remoteClientJustConnected:
+                    mobileNotifiedBrowserConnected.fulfill()
+                case .remoteClientDisconnected: continue
+                }
+            }
+        }
+        
+        Task {
+            for try await browserSIPEvent in try await websocketBrowser
+                .incomingMessages()
+                .compactMap({ try SessionInitiationProtocolEvent.from($0) })
+            {
+                switch browserSIPEvent {
+                case .remoteClientIsAlreadyConnected, .remoteClientJustConnected:
+                    browserNotifiedMobileConnected.fulfill()
+                case .remoteClientDisconnected: continue
+                }
+            }
+        }
    
-
-        await waitForExpectations(timeout: 5)
+        wait(for: [mobileNotifiedBrowserConnected, browserNotifiedMobileConnected], timeout: 5)
     }
 }
